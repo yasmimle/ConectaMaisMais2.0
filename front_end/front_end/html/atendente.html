@@ -1,0 +1,1243 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conecta++ - Atendente</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            display: flex;
+            background: #f4f7fb;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 260px;
+            background: #1565d8;
+            color: #fff;
+            padding: 20px;
+            min-height: 100vh;
+            flex-shrink: 0;
+        }
+
+            .sidebar h2 {
+                margin-bottom: 30px;
+                font-size: 22px;
+            }
+
+        .menu-toggle {
+            width: 100%;
+            padding: 15px;
+            margin-top: 10px;
+            border: none;
+            border-radius: 12px;
+            background: #fff;
+            color: #1565d8;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            text-align: left;
+        }
+
+        .menu-group {
+            margin-bottom: 18px;
+        }
+
+        .submenu {
+            display: none;
+            margin-top: 10px;
+        }
+
+            .submenu.show {
+                display: block;
+            }
+
+            .submenu a {
+                display: block;
+                background: rgba(255,255,255,0.12);
+                color: #fff;
+                padding: 12px 16px;
+                margin-top: 10px;
+                border-radius: 12px;
+                text-decoration: none;
+                cursor: pointer;
+                transition: 0.2s ease;
+                font-size: 14px;
+            }
+
+                .submenu a:hover {
+                    background: rgba(255,255,255,0.2);
+                }
+
+        .main {
+            flex: 1;
+            padding: 25px;
+            min-width: 0;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #fff;
+            padding: 20px;
+            border-radius: 14px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+            position: relative;
+            overflow: visible;
+        }
+
+            .topbar h1 {
+                margin: 0;
+                font-size: 30px;
+            }
+
+        .user-area {
+            margin-left: auto;
+            position: relative;
+        }
+
+        .profile-btn {
+            background: #1565d8;
+            color: #fff;
+            border: none;
+            padding: 12px 18px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .dropdown {
+            position: absolute;
+            top: 58px;
+            right: 0;
+            left: auto;
+            width: 260px;
+            background: #fff;
+            padding: 20px;
+            border-radius: 14px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            z-index: 2000;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .logout-btn {
+            display: block;
+            width: 100%;
+            margin-top: 12px;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            text-align: center;
+            text-decoration: none;
+            cursor: pointer;
+            background: #ffebeb;
+            color: #d63031;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .section {
+            display: none;
+            margin-top: 25px;
+        }
+
+            .section.active {
+                display: block;
+            }
+
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 14px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+        }
+
+        .table-header {
+            margin-bottom: 20px;
+        }
+
+        .search-bar input {
+            width: 300px;
+            max-width: 100%;
+            padding: 12px;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            outline: none;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        th {
+            background: #f4f7fb;
+            padding: 15px;
+            text-align: left;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            color: #666;
+            font-weight: 700;
+        }
+
+        td {
+            padding: 15px;
+            border-top: 1px solid #eee;
+            vertical-align: middle;
+            font-size: 15px;
+        }
+
+        .ativo {
+            background: #10b981;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .inativo {
+            background: #f59e0b;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .tipo {
+            padding: 5px 12px;
+            border-radius: 20px;
+            color: white;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .doar {
+            background: #7c3aed;
+        }
+
+        .receber {
+            background: #ec4899;
+        }
+
+        .ambos {
+            background: #14b8a6;
+        }
+
+        .dropdown-actions {
+            position: relative;
+            display: inline-block;
+        }
+
+        .btn-acoes {
+            background: #edf4ff;
+            border: none;
+            padding: 10px 14px;
+            border-radius: 10px;
+            color: #1565d8;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .actions-menu {
+            position: absolute;
+            top: 45px;
+            right: 0;
+            background: white;
+            border-radius: 12px;
+            width: 180px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+            overflow: hidden;
+            z-index: 999;
+        }
+
+            .actions-menu button {
+                width: 100%;
+                border: none;
+                background: white;
+                padding: 14px;
+                text-align: left;
+                cursor: pointer;
+                font-size: 15px;
+            }
+
+                .actions-menu button:hover {
+                    background: #f4f7fb;
+                }
+
+        .modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.45);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .modal-content {
+            background: white;
+            width: 420px;
+            padding: 28px;
+            border-radius: 24px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+
+            .modal-content h2 {
+                margin-bottom: 20px;
+                font-size: 24px;
+                font-weight: bold;
+            }
+
+            .modal-content input,
+            .modal-content select {
+                width: 100%;
+                padding: 14px;
+                border: 1px solid #ddd;
+                border-radius: 12px;
+                margin-bottom: 20px;
+                outline: none;
+            }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        .btn-cancelar {
+            background: #e5e5e5;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        .btn-salvar {
+            background: #22c55e;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .dropdown-btn {
+            display: block;
+            width: 100%;
+            margin-top: 12px;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            text-align: center;
+            text-decoration: none;
+            cursor: pointer;
+            background: #edf4ff;
+            color: #1565d8;
+            font-weight: bold;
+        }
+
+        .info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            padding: 18px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .editable {
+            min-width: 220px;
+        }
+
+        .info button {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 8px;
+            background: #edf4ff;
+            color: #1565d8;
+            cursor: pointer;
+            font-weight: 700;
+        }
+
+        #perfilAtendente.active,
+        #dadosONGAtendente.active {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            width: 100%;
+        }
+
+        #perfilAtendente .card,
+        #dadosONGAtendente .card {
+            width: 700px;
+            max-width: 90%;
+            margin: 40px auto;
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.3);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .modal-content {
+            background: white;
+            width: 420px;
+            padding: 28px;
+            border-radius: 24px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+
+            .modal-content h2 {
+                margin-bottom: 20px;
+                font-size: 24px;
+                font-weight: bold;
+            }
+
+        .modal-buttons {
+            margin-top: 25px;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .btn-salvar {
+            background: #30c95c;
+            color: white;
+            border: none;
+            padding: 12px 22px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .modal {
+            z-index: 99999;
+        }
+
+        .dropdown {
+            z-index: 1;
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.35);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 99999;
+        }
+
+        .modal-content-grande {
+            background: #fff;
+            width: 700px;
+            max-width: 90%;
+            padding: 45px;
+            border-radius: 24px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+        }
+
+            .modal-content-grande h2 {
+                font-size: 28px;
+                margin-bottom: 40px;
+            }
+
+            .modal-content-grande .info {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 22px 0;
+                border-bottom: 1px solid #e5e5e5;
+                font-size: 20px;
+            }
+
+                .modal-content-grande .info strong {
+                    font-weight: 700;
+                }
+
+        #profileDropdown.hidden {
+            display: none !important;
+        }
+
+        #usuarios table {
+            table-layout: fixed;
+        }
+
+        #usuarios th:nth-child(1),
+        #usuarios td:nth-child(1) {
+            width: 14%;
+        }
+
+        #usuarios th:nth-child(2),
+        #usuarios td:nth-child(2) {
+            width: 14%;
+        }
+
+        #usuarios th:nth-child(3),
+        #usuarios td:nth-child(3) {
+            width: 14%;
+        }
+
+        #usuarios th:nth-child(4),
+        #usuarios td:nth-child(4) {
+            width: 14%;
+        }
+
+        #usuarios th:nth-child(5),
+        #usuarios td:nth-child(5) {
+            width: 32%;
+        }
+
+        #usuarios th:nth-child(6),
+        #usuarios td:nth-child(6) {
+            width: 12%;
+        }
+
+        .pendente {
+            background: #f59e0b;
+            color: #fff;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .andamento {
+            background: #3b82f6;
+            color: #fff;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .concluido {
+            background: #10b981;
+            color: #fff;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .success-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.45);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 99999;
+        }
+
+        .success-card {
+            width: min(420px, 90vw);
+            background: #fff;
+            border-radius: 22px;
+            padding: 28px 26px;
+            box-shadow: 0 18px 45px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+
+        .success-icon {
+            width: 68px;
+            height: 68px;
+            margin: 0 auto 16px;
+            border-radius: 50%;
+            background: #22c55e;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 38px;
+            font-weight: bold;
+        }
+
+        .success-card h2 {
+            margin: 0 0 10px;
+            font-size: 28px;
+            color: #111;
+        }
+
+        .success-card p {
+            margin: 0 0 18px;
+            color: #444;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+
+        .success-card button {
+            width: 100%;
+            padding: 14px;
+            border: 0;
+            border-radius: 14px;
+            background: #1f5fe0;
+            color: #fff;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <h2>Menu</h2>
+
+        <div class="menu-group">
+            <button class="menu-toggle" onclick="toggleMenu('usuariosMenu')">Usuários</button>
+            <div id="usuariosMenu" class="submenu">
+                <a onclick="showSection('usuarios')">Listar usuários</a>
+            </div>
+        </div>
+
+        <div class="menu-group">
+            <button class="menu-toggle" onclick="toggleMenu('interessesMenu')">Interesses</button>
+            <div id="interessesMenu" class="submenu">
+                <a onclick="showSection('interesses')">Listar interesses</a>
+            </div>
+        </div>
+    </aside>
+
+    <main class="main">
+        <header class="topbar">
+            <h1>Painel do Atendente</h1>
+
+            <div class="user-area">
+                <button class="profile-btn" onclick="toggleProfile()">
+                    Atendente ▼
+                </button>
+
+                <div id="profileDropdown" class="dropdown hidden">
+                    <strong id="atendenteNomeText">Atendente</strong>
+                    <p id="atendenteEmailText">atendente@conecta.com</p>
+
+                    <button class="dropdown-btn" onclick="showSection('perfilAtendente')">
+                        Perfil
+                    </button>
+
+                    <button class="dropdown-btn" onclick="showSection('dadosONGAtendente')">
+                        Dados ONG
+                    </button>
+
+                    <a href="#" class="logout-btn" onclick="sair(); return false;">
+                        Sair
+                    </a>
+                </div>
+            </div>
+        </header>
+        </header>
+
+        <section id="usuarios" class="section active">
+            <div class="card">
+                <div class="table-header">
+                    <h2>Usuários cadastrados</h2>
+                </div>
+
+                <div class="search-bar">
+                    <input type="text" id="searchUsuariosAtendente" placeholder="Pesquisar usuário">
+                </div>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>CPF</th>
+                            <th>Email</th>
+                            <th>Telefone</th>
+                            <th>Endereço</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="listaUsuariosAtendente"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="interesses" class="section">
+            <div class="card">
+                <div class="table-header">
+                    <h2>Interesses</h2>
+                </div>
+
+                <div class="search-bar">
+                    <input type="text" id="searchInteressesAtendente" placeholder="Pesquisar interesse">
+                </div>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nome do Idoso</th>
+                            <th>Tipo Solicitação</th>
+                            <th>Descrição</th>
+                            <th>Status</th>
+                            <th>Data da Solicitação</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="listaInteressesAtendente"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <div id="modalEditarUsuario" class="modal hidden">
+        <div class="modal-content">
+            <h2 id="tituloEditarUsuario">Editar</h2>
+
+            <input type="text" id="valorEditarUsuario" placeholder="Novo valor">
+
+            <div class="modal-buttons">
+                <button class="btn-cancelar" onclick="fecharModalUsuario()">Cancelar</button>
+                <button class="btn-salvar" onclick="salvarEdicaoUsuario()">Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalEditarInteresse" class="modal hidden">
+        <div class="modal-content">
+            <h2 id="tituloEditarInteresse">Editar</h2>
+            <div id="areaEditarInteresse"></div>
+
+            <div class="modal-buttons">
+                <button class="btn-cancelar" onclick="fecharModalInteresse()">Cancelar</button>
+                <button class="btn-salvar" onclick="salvarEdicaoInteresse()">Salvar</button>
+            </div>
+        </div>
+    </div>
+    <section id="perfilAtendente" class="section">
+        <div class="modal">
+            <div class="modal-content-grande">
+
+                <h2>Informações Pessoais</h2>
+
+                <div class="info">
+                    <strong>Nome:</strong>
+                    <span id="perfilAtendenteNome">Atendente</span>
+                </div>
+
+                <div class="info">
+                    <strong>Email:</strong>
+                    <span id="perfilAtendenteEmail">atendente@gmail.com</span>
+                </div>
+
+                <div class="info">
+                    <strong>Celular:</strong>
+                    <span id="perfilAtendenteCelular">Não adicionado</span>
+                </div>
+
+                <div class="modal-buttons">
+                    <button class="btn-salvar"
+                            onclick="showSection('usuarios')">
+                        Fechar
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <section id="dadosONGAtendente" class="section">
+        <div class="modal">
+            <div class="modal-content-grande">
+
+                <h2>Dados da ONG</h2>
+
+                <div class="info">
+                    <strong>Nome:</strong>
+                    <span>Conecta++</span>
+                </div>
+
+                <div class="info">
+                    <strong>Telefone:</strong>
+                    <span>(11) 91910-0860</span>
+                </div>
+
+                <div class="info">
+                    <strong>Email:</strong>
+                    <span>contato@ong.com</span>
+                </div>
+
+                <div class="info">
+                    <strong>Endereço:</strong>
+                    <span>Rua Gugu, São Paulo SP</span>
+                </div>
+
+                <div class="info">
+                    <strong>CNPJ:</strong>
+                    <span>12345678000199</span>
+                </div>
+
+                <div class="modal-buttons">
+                    <button class="btn-salvar"
+                            onclick="showSection('usuarios')">
+                        Fechar
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <div id="sucessoModalAtendente" class="success-modal hidden">
+        <div class="success-card">
+            <div class="success-icon">✓</div>
+            <h2>Salvo com sucesso!</h2>
+            <p>As alterações foram atualizadas.</p>
+            <button type="button" onclick="fecharSucessoAtendente()">Fechar</button>
+        </div>
+    </div>
+
+    <script>
+
+function abrirPerfil() {
+            document.getElementById("perfilModal").style.display = "flex";
+            document.getElementById("profileDropdown").style.display = "none";
+}
+
+function fecharPerfil() {
+            document.getElementById("perfilModal").style.display = "none";
+}
+
+function abrirDadosONG() {
+            document.getElementById("ongModal").style.display = "flex";
+            document.getElementById("profileDropdown").style.display = "none";
+}
+
+function fecharDadosONG() {
+            document.getElementById("ongModal").style.display = "none";
+}
+
+                function showSection(sectionId) {
+                    document.querySelectorAll('.section').forEach(section => {
+                        section.classList.remove('active');
+                    });
+
+                    const selected = document.getElementById(sectionId);
+                    if (selected) {
+                        selected.classList.add('active');
+                    }
+                }
+
+                function toggleMenu(menuId) {
+                    const menu = document.getElementById(menuId);
+                    if (!menu) return;
+                    menu.classList.toggle("show");
+                }
+
+                function toggleProfile() {
+                    const dropdown = document.getElementById("profileDropdown");
+                    if (dropdown) {
+                        dropdown.classList.toggle("hidden");
+                    }
+                }
+
+                function sair() {
+                    localStorage.removeItem("tipoUsuario");
+                    localStorage.removeItem("atendenteEmail");
+                    localStorage.removeItem("atendenteNome");
+                    window.location.href = "index.html";
+                }
+
+                function abrirSucessoAtendente() {
+                    document.getElementById("sucessoModalAtendente").classList.remove("hidden");
+                }
+
+                function fecharSucessoAtendente() {
+                    document.getElementById("sucessoModalAtendente").classList.add("hidden");
+                }
+
+                function toggleActions(button) {
+                    const menu = button.parentElement.querySelector(".actions-menu");
+                    if (!menu) return;
+
+                    document.querySelectorAll(".actions-menu").forEach(other => {
+                        if (other !== menu) other.classList.add("hidden");
+                    });
+
+                    menu.classList.toggle("hidden");
+                }
+
+                function carregarUsuariosAtendente() {
+                    const tbody = document.getElementById("listaUsuariosAtendente");
+                    if (!tbody) return;
+
+                    const usuarios = JSON.parse(localStorage.getItem("usuariosCadastrados") || "[]");
+                    tbody.innerHTML = "";
+
+                    usuarios.forEach((usuario, index) => {
+                        const tr = document.createElement("tr");
+
+                        tr.innerHTML = `
+                            <td>${usuario.nome || ""}</td>
+                            <td>${usuario.cpf || ""}</td>
+                            <td>${usuario.email || ""}</td>
+                            <td>${usuario.telefone || ""}</td>
+                            <td>${usuario.endereco || ""}</td>
+                            <td>
+                                <div class="dropdown-actions">
+                                    <button class="btn-acoes" type="button" onclick="toggleActions(this)">Ações ▼</button>
+                                    <div class="actions-menu hidden">
+                                        <button type="button" onclick="abrirModalUsuario('telefone', ${index})">Editar telefone</button>
+                                        <button type="button" onclick="abrirModalUsuario('email', ${index})">Editar email</button>
+                                        <button type="button" onclick="abrirModalUsuario('endereco', ${index})">Editar endereço</button>
+                                    </div>
+                                </div>
+                            </td>
+                        `;
+
+                        tbody.appendChild(tr);
+                    });
+                }
+
+                function pesquisarUsuariosAtendente() {
+                    const input = document.getElementById("searchUsuariosAtendente");
+                    const tbody = document.getElementById("listaUsuariosAtendente");
+
+                    if (!input || !tbody) return;
+
+                    input.addEventListener("input", function () {
+                        const termo = this.value.toLowerCase();
+
+                        tbody.querySelectorAll("tr").forEach(tr => {
+                            tr.style.display = tr.textContent.toLowerCase().includes(termo) ? "" : "none";
+                        });
+                    });
+                }
+
+                function carregarInteressesAtendente() {
+            const tbody = document.getElementById("listaInteressesAtendente");
+            if (!tbody) return;
+
+            const interesses = JSON.parse(localStorage.getItem("interessesCadastrados") || "[]");
+            tbody.innerHTML = "";
+
+            interesses.forEach((item, index) => {
+                const tipo = (item.tipo || "").toLowerCase();
+
+                const classeTipo =
+                    tipo === "doar" ? "doar" :
+                    tipo === "receber" ? "receber" : "ambos";
+
+                const statusTexto = item.status || "Pendente";
+                const status = statusTexto.toLowerCase();
+
+                const classeStatus =
+                    status.includes("andamento") ? "andamento" :
+                    status.includes("conclu") ? "concluido" : "pendente";
+
+                const tr = document.createElement("tr");
+
+                tr.innerHTML = `
+                    <td>${item.nome || ""}</td>
+
+                    <td>
+                        <span class="tipo ${classeTipo}">
+                            ${item.tipo || ""}
+                        </span>
+                    </td>
+
+                    <td>${item.necessidade || ""}</td>
+
+                    <td>
+                        <span class="${classeStatus}">
+                            ${statusTexto}
+                        </span>
+                    </td>
+
+                    <td>${item.dataSolicitacao || ""}</td>
+
+                    <td>
+                        <div class="dropdown-actions">
+                            <button class="btn-acoes" type="button" onclick="toggleActions(this)">
+                                Ações ▼
+                            </button>
+
+                            <div class="actions-menu hidden">
+                                <button type="button" onclick="abrirModalInteresse('status', ${index})">
+                                    Editar status
+                                </button>
+
+                                <button type="button" onclick="abrirModalInteresse('descricao', ${index})">
+                                    Editar descrição
+                                </button>
+
+                                <button type="button" onclick="abrirModalInteresse('tipo', ${index})">
+                                    Editar tipo
+                                </button>
+
+                                <button type="button" onclick="removerInteresse(${index})">
+                                    Remover
+                                </button>
+                            </div>
+                        </div>
+                    </td>
+                `;
+
+                tbody.appendChild(tr);
+            });
+}
+
+                function pesquisarInteressesAtendente() {
+            const input = document.getElementById("searchInteressesAtendente");
+            const tbody = document.getElementById("listaInteressesAtendente");
+
+            if (!input || !tbody) return;
+
+            input.addEventListener("input", function () {
+                const termo = this.value.toLowerCase();
+
+                tbody.querySelectorAll("tr").forEach(tr => {
+                    tr.style.display = tr.textContent.toLowerCase().includes(termo) ? "" : "none";
+                });
+            });
+}
+
+                let usuarioEditandoIndex = null;
+                let usuarioEditandoCampo = null;
+
+                function abrirModalUsuario(campo, index) {
+                    usuarioEditandoIndex = index;
+                    usuarioEditandoCampo = campo;
+
+                    const usuarios = JSON.parse(localStorage.getItem("usuariosCadastrados") || "[]");
+                    const usuario = usuarios[index] || {};
+
+                    const titulos = {
+                        telefone: "Editar telefone",
+                        email: "Editar email",
+                        endereco: "Editar endereço"
+                    };
+
+                    document.getElementById("tituloEditarUsuario").textContent = titulos[campo] || "Editar";
+                    document.getElementById("valorEditarUsuario").value = usuario[campo] || "";
+                    document.getElementById("modalEditarUsuario").classList.remove("hidden");
+                }
+
+                function fecharModalUsuario() {
+                    document.getElementById("modalEditarUsuario").classList.add("hidden");
+                }
+
+                function salvarEdicaoUsuario() {
+                    const valor = document.getElementById("valorEditarUsuario").value.trim();
+                    if (!valor) {
+                        alert("Preencha o campo.");
+                        return;
+                    }
+
+                    const usuarios = JSON.parse(localStorage.getItem("usuariosCadastrados") || "[]");
+                    if (!usuarios[usuarioEditandoIndex]) return;
+
+                    usuarios[usuarioEditandoIndex][usuarioEditandoCampo] = valor;
+
+                    localStorage.setItem("usuariosCadastrados", JSON.stringify(usuarios));
+                    fecharModalUsuario();
+                    carregarUsuariosAtendente();
+                    abrirSucessoAtendente();
+                }
+
+                let interesseEditandoIndex = null;
+                let interesseEditandoCampo = null;
+
+                function abrirModalInteresse(campo, index) {
+                    interesseEditandoIndex = index;
+                    interesseEditandoCampo = campo;
+
+                    const interesses = JSON.parse(localStorage.getItem("interessesCadastrados") || "[]");
+                    const item = interesses[index] || {};
+
+                    const titulos = {
+                        status: "Editar status",
+                        tipo: "Editar tipo",
+                        descricao: "Editar descrição"
+                    };
+
+                    document.getElementById("tituloEditarInteresse").textContent =
+                        titulos[campo] || "Editar";
+
+                    if (campo === "status") {
+                        document.getElementById("areaEditarInteresse").innerHTML = `
+                            <select id="valorEditarInteresse">
+                                <option value="Pendente" ${item.status === "Pendente" ? "selected" : ""}>Pendente</option>
+                                <option value="Em andamento" ${(item.status || "").toLowerCase().includes("andamento") ? "selected" : ""}>Em andamento</option>
+                                <option value="Concluído" ${(item.status || "").toLowerCase().includes("conclu") ? "selected" : ""}>Concluído</option>
+                            </select>
+                        `;
+                    } else if (campo === "tipo") {
+                        document.getElementById("areaEditarInteresse").innerHTML = `
+                            <select id="valorEditarInteresse">
+                                <option value="doar" ${item.tipo === "doar" ? "selected" : ""}>Doar</option>
+                                <option value="receber" ${item.tipo === "receber" ? "selected" : ""}>Receber</option>
+                                <option value="ambos" ${item.tipo === "ambos" ? "selected" : ""}>Ambos</option>
+                            </select>
+                        `;
+                    } else {
+                        document.getElementById("areaEditarInteresse").innerHTML = `
+                            <input type="text" id="valorEditarInteresse" value="${item.necessidade || ""}" placeholder="Nova descrição">
+                        `;
+                    }
+
+                    document.getElementById("modalEditarInteresse").classList.remove("hidden");
+                }
+
+                function fecharModalInteresse() {
+                    document.getElementById("modalEditarInteresse").classList.add("hidden");
+                }
+
+                function salvarEdicaoInteresse() {
+                    const valorEl = document.getElementById("valorEditarInteresse");
+                    const valor = valorEl ? valorEl.value.trim() : "";
+
+                    if (!valor) {
+                        alert("Preencha o campo.");
+                        return;
+                    }
+
+                    const interesses = JSON.parse(localStorage.getItem("interessesCadastrados") || "[]");
+                    if (!interesses[interesseEditandoIndex]) return;
+
+                    if (interesseEditandoCampo === "status") {
+                        interesses[interesseEditandoIndex].status = valor;
+                    } else if (interesseEditandoCampo === "tipo") {
+                        interesses[interesseEditandoIndex].tipo = valor;
+                    } else {
+                        interesses[interesseEditandoIndex].necessidade = valor;
+                    }
+
+                    localStorage.setItem("interessesCadastrados", JSON.stringify(interesses));
+                    fecharModalInteresse();
+                    carregarInteressesAtendente();
+                    abrirSucessoAtendente();
+                }
+
+                function removerInteresse(index) {
+                    const interesses = JSON.parse(localStorage.getItem("interessesCadastrados") || "[]");
+                    interesses.splice(index, 1);
+                    localStorage.setItem("interessesCadastrados", JSON.stringify(interesses));
+                    carregarInteressesAtendente();
+                }
+
+                document.addEventListener("DOMContentLoaded", function () {
+            const tipoUsuario = localStorage.getItem("tipoUsuario");
+
+            if (tipoUsuario !== "atendente") {
+                window.location.href = "index.html";
+                return;
+            }
+
+            const email = localStorage.getItem("atendenteEmail");
+            const emailText = document.getElementById("atendenteEmailText");
+
+            if (email && emailText) {
+                emailText.textContent = email;
+            }
+
+            const nome = localStorage.getItem("atendenteNome");
+            const nomeText = document.getElementById("atendenteNomeText");
+
+            if (nome && nomeText) {
+                nomeText.textContent = nome;
+            }
+
+            /* tela "Informações Pessoais" (Perfil) */
+            const perfilNome = document.getElementById("perfilAtendenteNome");
+            const perfilEmail = document.getElementById("perfilAtendenteEmail");
+            const perfilCelular = document.getElementById("perfilAtendenteCelular");
+            const celular = localStorage.getItem("atendenteCelular");
+
+            if (perfilNome && nome) perfilNome.textContent = nome;
+            if (perfilEmail && email) perfilEmail.textContent = email;
+            if (perfilCelular && celular) perfilCelular.textContent = celular;
+
+            showSection("usuarios");
+carregarUsuariosAtendente();
+carregarInteressesAtendente();
+pesquisarUsuariosAtendente();
+pesquisarInteressesAtendente();
+
+});
+
+/* ===============================
+   ENTER PARA CONFIRMAR / CLIQUE FORA PARA FECHAR
+================================== */
+
+document.addEventListener("keydown", function (evento) {
+
+    if (evento.key !== "Enter") return;
+
+    const alvo = evento.target;
+
+    if (alvo.tagName === "TEXTAREA") return;
+
+    const modal = alvo.closest(".modal:not(.hidden)");
+
+    if (!modal) return;
+
+    const botaoSalvar = modal.querySelector(".btn-salvar");
+
+    if (botaoSalvar) {
+        evento.preventDefault();
+        botaoSalvar.click();
+    }
+});
+
+document.addEventListener("click", function (evento) {
+
+    const dropdown = document.getElementById("profileDropdown");
+    const botaoPerfil = document.querySelector(".profile-btn");
+
+    if (dropdown && !dropdown.classList.contains("hidden")) {
+        if (!dropdown.contains(evento.target) && evento.target !== botaoPerfil) {
+            dropdown.classList.add("hidden");
+        }
+    }
+
+    document.querySelectorAll(".actions-menu:not(.hidden)").forEach(function (menu) {
+        const container = menu.closest(".dropdown-actions");
+        if (container && !container.contains(evento.target)) {
+            menu.classList.add("hidden");
+        }
+    });
+
+    document.querySelectorAll(".modal:not(.hidden)").forEach(function (modal) {
+        if (evento.target === modal) {
+            modal.classList.add("hidden");
+        }
+    });
+});
+
+    </script>
+
+</body>
+
+</html>
