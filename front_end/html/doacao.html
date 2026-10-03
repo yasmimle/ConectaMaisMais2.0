@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Doações - Conecta++</title>
+
+<link rel="stylesheet" href="../css/style.css">
+
+</head>
+
+<body class="cadastro-page">
+
+<a href="cadastro.html" class="btn-voltar">
+← Voltar
+</a>
+
+<div class="logo-area">
+<img src="../Imagens/banner-idosos.png" alt="Conecta++">
+</div>
+
+<div class="container-form">
+
+<h1>Doação e Apoio</h1>
+
+<p class="texto-cadastro">
+Escolha uma opção abaixo e descreva sua necessidade ou doação.
+</p>
+
+<form>
+
+<div class="opcoes-doacao">
+
+<label class="opcao">
+<input type="radio" name="tipo" onclick="mostrarFormulario()" required>
+<span>Quero doar</span>
+</label>
+
+<label class="opcao">
+<input type="radio" name="tipo" onclick="mostrarFormulario()">
+<span>Preciso de ajuda</span>
+</label>
+
+<label class="opcao">
+<input type="radio" name="tipo" onclick="mostrarFormulario()">
+<span>Ambos</span>
+</label>
+
+</div>
+
+<!-- ÁREA OCULTA -->
+<div id="areaDescricao">
+
+<textarea
+maxlength="1300"
+placeholder="Descreva sua necessidade ou doação..."
+required
+></textarea>
+
+<p class="contador">
+Máximo de 1300 caracteres
+</p>
+
+<button type="button" onclick="finalizarCadastro()">
+Finalizar Cadastro
+</button>
+
+</div>
+
+</form>
+
+</div>
+
+<script src="../js/doacao.js"></script>
+
+</body>
+</html>
