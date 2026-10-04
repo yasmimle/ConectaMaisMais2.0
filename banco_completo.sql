@@ -1,13 +1,3 @@
-﻿-- ============================================================
--- BANCO DE DADOS COMPLETO - Sistema de Apoio ao Idoso (Conecta++)
---
--- ATENÇÃO: este script APAGA o banco dbSistemaDoacao (se ele já
--- existir) e cria tudo de novo, já com os dados iniciais.
--- Tudo que estiver cadastrado nele será perdido.
---
--- Como usar: abra no SQL Server Management Studio (SSMS),
--- conecte no servidor (ex.: localhost\SQLEXPRESS) e aperte F5.
--- ============================================================
 
 USE MASTER;
 GO
@@ -31,10 +21,6 @@ GO
 USE dbSistemaDoacao;
 GO
 
-
--- ============================================================
--- TABELAS
--- ============================================================
 
 CREATE TABLE ONG (
 
@@ -184,9 +170,6 @@ CREATE TABLE INTERESSE (
 GO
 
 
--- ============================================================
--- DADOS INICIAIS (o sistema precisa deles para funcionar)
--- ============================================================
 
 -- ONG (o sistema sempre usa a ONG de ID 1) - mesmos dados do site
 INSERT INTO ONG (DSC_NOME, NUM_TELEFONE, DSC_EMAIL, DSC_ENDERECO, NUM_CNPJ)
