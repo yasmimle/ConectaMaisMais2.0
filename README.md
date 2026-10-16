@@ -107,36 +107,36 @@ ConectaMaisMais
 A seguir, estão algumas das principais telas do site web do Conecta++.
 
 <table>
-<tr>
-<td align="center">
-<b>Tela Inicial</b><br>
-<img src="Imagens/tela_inicial.png" width="420" alt="Tela Inicial">
-</td>
-<td align="center">
-<b>Nossa História</b><br>
-<img src="Imagens/nossa_historia.png" width="420" alt="Nossa História">
-</td>
-</tr>
-<tr>
-<td align="center">
-<b>Lembretes de Saúde</b><br>
-<img src="Imagens/lembretes_saude.png" width="420" alt="Lembretes de Saúde">
-</td>
-<td align="center">
-<b>Prevenção de Golpes</b><br>
-<img src="Imagens/prevencao_golpes.png" width="420" alt="Prevenção de Golpes">
-</td>
-</tr>
-<tr>
-<td align="center">
-<b>Painel Administrativo</b><br>
-<img src="Imagens/painel_admin.png" width="420" alt="Painel Administrativo">
-</td>
-<td align="center">
-<b>Painel do Atendente</b><br>
-<img src="Imagens/painel_atendente.png" width="420" alt="Painel do Atendente">
-</td>
-</tr>
+  <tr>
+    <td align="center" width="50%">
+      <p><strong>Tela Inicial</strong></p>
+      <img src="Imagens/tela_inicial.png" width="420" alt="Tela Inicial">
+    </td>
+    <td align="center" width="50%">
+      <p><strong>Nossa História</strong></p>
+      <img src="Imagens/nossa_historia.png" width="420" alt="Nossa História">
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="50%">
+      <p><strong>Lembretes de Saúde</strong></p>
+      <img src="Imagens/lembretes_saude.png" width="420" alt="Lembretes de Saúde">
+    </td>
+    <td align="center" width="50%">
+      <p><strong>Prevenção de Golpes</strong></p>
+      <img src="Imagens/prevencao_golpes.png" width="420" alt="Prevenção de Golpes">
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="50%">
+      <p><strong>Painel Administrativo</strong></p>
+      <img src="Imagens/painel_admin.png" width="420" alt="Painel Administrativo">
+    </td>
+    <td align="center" width="50%">
+      <p><strong>Painel do Atendente</strong></p>
+      <img src="Imagens/painel_atendente.png" width="420" alt="Painel do Atendente">
+    </td>
+  </tr>
 </table>
 
 ### Aplicativo
