@@ -107,36 +107,36 @@ ConectaMaisMais
 A seguir, estão algumas das principais telas do site web do Conecta++.
 
 <table>
-  <tr>
-    <td align="center">
-      <b>Tela Inicial</b><br>
-      <img src="Imagens/tela_inicial.png" width="420">
-    </td>
-    <td align="center">
-      <b>Nossa História</b><br>
-      <img src="Imagens/nossa_historia.png" width="420">
-    </td>
-  </tr>
-  <tr>
-    <td align="center">
-      <b>Lembretes de Saúde</b><br>
-      <img src="Imagens/lembretes_saude.png" width="420">
-    </td>
-   <td align="center">
-  <b>Prevenção de Golpes</b><br>
-  <img src="Imagens/prevencao_golpes.png" width="420">
+<tr>
+<td align="center">
+<b>Tela Inicial</b><br>
+<img src="Imagens/tela_inicial.png" width="420" alt="Tela Inicial">
 </td>
-  </tr>
-  <tr>
-    <td align="center">
-      <b>Painel Administrativo</b><br>
-      <img src="Imagens/painel_admin.png" width="420">
-    </td>
- <td align="center">
-  <b>Painel do Atendente</b><br>
-  <img src="Imagens/painel_atendente.png" width="420">
+<td align="center">
+<b>Nossa História</b><br>
+<img src="Imagens/nossa_historia.png" width="420" alt="Nossa História">
 </td>
-  </tr>
+</tr>
+<tr>
+<td align="center">
+<b>Lembretes de Saúde</b><br>
+<img src="Imagens/lembretes_saude.png" width="420" alt="Lembretes de Saúde">
+</td>
+<td align="center">
+<b>Prevenção de Golpes</b><br>
+<img src="Imagens/prevencao_golpes.png" width="420" alt="Prevenção de Golpes">
+</td>
+</tr>
+<tr>
+<td align="center">
+<b>Painel Administrativo</b><br>
+<img src="Imagens/painel_admin.png" width="420" alt="Painel Administrativo">
+</td>
+<td align="center">
+<b>Painel do Atendente</b><br>
+<img src="Imagens/painel_atendente.png" width="420" alt="Painel do Atendente">
+</td>
+</tr>
 </table>
 
 ### Aplicativo
