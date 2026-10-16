@@ -143,8 +143,8 @@ A seguir, são apresentadas as principais telas do site web do Conecta++.
       <img src="Imagens/cadastro.png" width="420" alt="Cadastro">
     </td>
     <td align="center" width="50%">
-      <strong>Finalizar Cadastro</strong><br><br>
-      <img src="Imagens/finalizar_cadastro.png" width="420" alt="Finalizar Cadastro">
+      <strong>Tipo de Solicitação</strong><br><br>
+      <img src="Imagens/tipo_solicitacao.png" width="420" alt="Tipo de Solicitação">
     </td>
   </tr>
   <tr>
@@ -152,9 +152,9 @@ A seguir, são apresentadas as principais telas do site web do Conecta++.
       <strong>Necessidades</strong><br><br>
       <img src="Imagens/necessidade.png" width="420" alt="Necessidades">
     </td>
-    <td align="center" width="50%">
-      <strong>Tipo de Solicitação</strong><br><br>
-      <img src="Imagens/tipo_solicitacao.png" width="420" alt="Tipo de Solicitação">
+   <td align="center" width="50%">
+      <strong>Finalizar Cadastro</strong><br><br>
+      <img src="Imagens/finalizar_cadastro.png" width="420" alt="Finalizar Cadastro">
     </td>
   </tr>
 </table>
