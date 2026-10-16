@@ -104,40 +104,61 @@ ConectaMaisMais
 
 ### Site Web
 
-A seguir, estão algumas das principais telas do site web do Conecta++.
+A seguir, são apresentadas as principais telas do site web do Conecta++.
 
 <table>
   <tr>
     <td align="center" width="50%">
-      <p><strong>Tela Inicial</strong></p>
+      <strong>Tela Inicial</strong><br><br>
       <img src="Imagens/tela_inicial.png" width="420" alt="Tela Inicial">
     </td>
     <td align="center" width="50%">
-      <p><strong>Nossa História</strong></p>
+      <strong>Nossa História</strong><br><br>
       <img src="Imagens/nossa_historia.png" width="420" alt="Nossa História">
     </td>
   </tr>
   <tr>
     <td align="center" width="50%">
-      <p><strong>Lembretes de Saúde</strong></p>
+      <strong>Avisos de Saúde</strong><br><br>
       <img src="Imagens/lembretes_saude.png" width="420" alt="Lembretes de Saúde">
     </td>
     <td align="center" width="50%">
-      <p><strong>Prevenção de Golpes</strong></p>
+      <strong>Prevenção de Golpes</strong><br><br>
       <img src="Imagens/prevencao_golpes.png" width="420" alt="Prevenção de Golpes">
     </td>
   </tr>
   <tr>
     <td align="center" width="50%">
-      <p><strong>Painel Administrativo</strong></p>
+      <strong>Painel Administrativo</strong><br><br>
       <img src="Imagens/painel_admin.png" width="420" alt="Painel Administrativo">
     </td>
     <td align="center" width="50%">
-      <p><strong>Painel do Atendente</strong></p>
-      <img src="Imagens/painel_atendente.png" width="420" alt="Painel do Atendente">
+      <strong>Painel Atendente</strong><br><br>
+      <img src="Imagens/painel_atendente.png" width="420" alt="Painel Atendente">
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="50%">
+      <strong>Cadastro</strong><br><br>
+      <img src="Imagens/cadastro.png" width="420" alt="Cadastro">
+    </td>
+    <td align="center" width="50%">
+      <strong>Finalizar Cadastro</strong><br><br>
+      <img src="Imagens/finalizar_cadastro.png" width="420" alt="Finalizar Cadastro">
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="50%">
+      <strong>Necessidades</strong><br><br>
+      <img src="Imagens/necessidade.png" width="420" alt="Necessidades">
+    </td>
+    <td align="center" width="50%">
+      <strong>Tipo de Solicitação</strong><br><br>
+      <img src="Imagens/tipo_solicitacao.png" width="420" alt="Tipo de Solicitação">
     </td>
   </tr>
 </table>
+
 
 ### Aplicativo
 
