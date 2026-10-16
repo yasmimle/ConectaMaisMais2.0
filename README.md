@@ -122,20 +122,20 @@ A seguir, estão algumas das principais telas do site web do Conecta++.
       <b>Lembretes de Saúde</b><br>
       <img src="Imagens/lembretes_saude.png" width="420">
     </td>
-    <td align="center">
-      <b>Prevenção de Golpes</b><br>
-      <img src="Imagens/prevencao_golpes.png" width="420">
-    </td>
+   <td align="center">
+  <b>Prevenção de Golpes</b><br>
+  <img src="Imagens/prevencao_golpes.png" width="420">
+</td>
   </tr>
   <tr>
     <td align="center">
       <b>Painel Administrativo</b><br>
       <img src="Imagens/painel_admin.png" width="420">
     </td>
-    <td align="center">
-      <b>Painel do Atendente</b><br>
-      <img src="Imagens/painel_atendente.png" width="420">
-    </td>
+ <td align="center">
+  <b>Painel do Atendente</b><br>
+  <img src="Imagens/painel_atendente.png" width="420">
+</td>
   </tr>
 </table>
 
