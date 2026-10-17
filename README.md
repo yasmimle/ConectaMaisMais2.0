@@ -170,33 +170,33 @@ As imagens abaixo apresentam as principais telas do aplicativo Conecta++, desenv
     <td align="center"><strong>Login</strong></td>
   </tr>
   <tr>
-    <td><img src="Imagens/Tela_inicial.png" width="300"></td>
-    <td><img src="Imagens/Login.png" width="300"></td>
+    <td><img src="Imagens/tela_inicial.jpeg" width="300"></td>
+    <td><img src="Imagens/login.jpeg" width="300"></td>
   </tr>
   <tr>
     <td align="center"><strong>Novo Agendamento</strong></td>
     <td align="center"><strong>Detalhes do Agendamento</strong></td>
   </tr>
   <tr>
-    <td><img src="Imagens/Novo_agendamento.png" width="300"></td>
-    <td><img src="Imagens/Detalhes_agendamento.png" width="300"></td>
+    <td><img src="Imagens/novo_agendamento.jpeg" width="300"></td>
+    <td><img src="Imagens/detalhes_agendamento.jpeg" width="300"></td>
   </tr>
   <tr>
     <td align="center"><strong>Perfil do Usuário</strong></td>
     <td align="center"><strong>Perfil do Atendente</strong></td>
   </tr>
   <tr>
-    <td><img src="Imagens/Perfil_usuario.png" width="300"></td>
-    <td><img src="Imagens/Perfil_atendente.png" width="300"></td>
+    <td><img src="Imagens/perfil_usuario.jpeg" width="300"></td>
+    <td><img src="Imagens/perfil_atendente.jpeg" width="300"></td>
   </tr>
   <tr>
     <td align="center" colspan="2"><strong>Histórico</strong></td>
   </tr>
   <tr>
-    <td align="center" colspan="2"><img src="Imagens/Historico.png" width="300"></td>
+    <td align="center" colspan="2"><img src="Imagens/historico.jpeg" width="300"></td>
   </tr>
 </table>
----
+
 
 ## Como executar o projeto
 
