@@ -162,8 +162,40 @@ A seguir, são apresentadas as principais telas do site web do Conecta++.
 
 ### Aplicativo
 
-*Espaço reservado para imagens das funcionalidades de agendamento, lembretes, informações úteis e recursos de acessibilidade.*
+As imagens abaixo apresentam as principais telas do aplicativo Conecta++, desenvolvido para auxiliar os idosos em seu cotidiano.
 
+<table>
+  <tr>
+    <td align="center"><strong>Tela Inicial</strong></td>
+    <td align="center"><strong>Login</strong></td>
+  </tr>
+  <tr>
+    <td><img src="Imagens/Tela_inicial.png" width="300"></td>
+    <td><img src="Imagens/Login.png" width="300"></td>
+  </tr>
+  <tr>
+    <td align="center"><strong>Novo Agendamento</strong></td>
+    <td align="center"><strong>Detalhes do Agendamento</strong></td>
+  </tr>
+  <tr>
+    <td><img src="Imagens/Novo_agendamento.png" width="300"></td>
+    <td><img src="Imagens/Detalhes_agendamento.png" width="300"></td>
+  </tr>
+  <tr>
+    <td align="center"><strong>Perfil do Usuário</strong></td>
+    <td align="center"><strong>Perfil do Atendente</strong></td>
+  </tr>
+  <tr>
+    <td><img src="Imagens/Perfil_usuario.png" width="300"></td>
+    <td><img src="Imagens/Perfil_atendente.png" width="300"></td>
+  </tr>
+  <tr>
+    <td align="center" colspan="2"><strong>Histórico</strong></td>
+  </tr>
+  <tr>
+    <td align="center" colspan="2"><img src="Imagens/Historico.png" width="300"></td>
+  </tr>
+</table>
 ---
 
 ## Como executar o projeto
