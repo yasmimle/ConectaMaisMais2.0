@@ -28,18 +28,6 @@ class Program
 
         Console.WriteLine("Conexão com banco realizada com sucesso!");
 
-        // Cria o administrador padrão (admin@conecta.com / 1234)
-        // somente se ainda não existir nenhum administrador
-        try
-        {
-            banco.GarantirAdminPadrao();
-        }
-        catch (Exception erro)
-        {
-            Console.WriteLine("Não foi possível criar o administrador padrão: " + erro.Message);
-            Console.WriteLine("Rode o script banco_completo.sql no SQL Server (ele cria o banco e os dados iniciais).");
-        }
-
         int opcao = 0;
 
         // Menu principal do sistema
@@ -93,14 +81,6 @@ class Program
     // Método responsável pelo cadastro de usuários
     static void CadastrarUsuario()
     {
-        // O banco vincula cada usuário a um administrador e a um atendente
-        if (!banco.ExisteAdminEAtendente())
-        {
-            Console.WriteLine("\nAntes de cadastrar usuários é preciso ter pelo menos 1 administrador e 1 atendente.");
-            Console.WriteLine("Entre como administrador e use a opção 16 (Cadastrar atendente).");
-            return;
-        }
-
         Usuario usuario = new Usuario();
 
         bool nomeValido = false;
@@ -357,19 +337,9 @@ class Program
 
         usuario.IdUf = idUf;
 
-        usuario.Cidade = cidade.Trim();
-
         // Montagem do endereço completo
         usuario.Endereco =
         $"CEP: {cep}, Nº: {numero}, Rua: {rua}, Bairro: {bairro}, Cidade: {cidade}, Estado: {banco.BuscarSiglaUf(usuario.IdUf)}";
-
-        // A coluna DSC_ENDERECO do banco aceita no máximo 150 caracteres
-        if (usuario.Endereco.Length > 150 || cidade.Trim().Length > 50)
-        {
-            Console.WriteLine("Endereço muito longo para o cadastro (máximo de 150 caracteres no total, cidade até 50).");
-            Console.WriteLine("Cadastro cancelado. Tente novamente com a rua ou o bairro abreviados.");
-            return;
-        }
 
         bool dataValida = false;
 
@@ -409,40 +379,29 @@ class Program
 
         // Escolha do tipo de participação
         Console.WriteLine("Tipo de participação:");
-        Console.WriteLine("1 - Quero doar");
-        Console.WriteLine("2 - Quero receber doação");
+        Console.WriteLine("1 - Doador");
+        Console.WriteLine("2 - Receptor");
         Console.WriteLine("3 - Ambos");
 
-        bool tipoValido = false;
+        string tipo = Console.ReadLine();
 
-        // Repete até escolher uma opção válida (como no front)
-        while (!tipoValido)
+        switch (tipo)
         {
-            Console.Write("Escolha o tipo: ");
+            case "1":
+                usuario.TipoParticipacao = "Doador";
+                break;
 
-            string tipo = Console.ReadLine();
+            case "2":
+                usuario.TipoParticipacao = "Receptor";
+                break;
 
-            switch (tipo)
-            {
-                case "1":
-                    usuario.TipoParticipacao = "doar";
-                    tipoValido = true;
-                    break;
+            case "3":
+                usuario.TipoParticipacao = "Ambos";
+                break;
 
-                case "2":
-                    usuario.TipoParticipacao = "receber";
-                    tipoValido = true;
-                    break;
-
-                case "3":
-                    usuario.TipoParticipacao = "ambos";
-                    tipoValido = true;
-                    break;
-
-                default:
-                    Console.WriteLine("Opção inválida. Digite 1, 2 ou 3.");
-                    break;
-            }
+            default:
+                usuario.TipoParticipacao = "Não informado";
+                break;
         }
 
         // Criação do interesse do usuário
@@ -450,30 +409,11 @@ class Program
 
         interesse.IdUsuario = usuario.IdUsuario;
 
-        // Descrição obrigatória (igual ao front)
-        string descricao = "";
+        Console.Write("Descreva sua necessidade ou doação: ");
 
-        while (string.IsNullOrWhiteSpace(descricao))
-        {
-            Console.Write("Descreva sua necessidade ou doação: ");
+        interesse.Descricao = Console.ReadLine();
 
-            descricao = Console.ReadLine();
-
-            if (string.IsNullOrWhiteSpace(descricao))
-            {
-                Console.WriteLine("Escreva sua necessidade ou doação.");
-            }
-            else if (descricao.Trim().Length > 255)
-            {
-                Console.WriteLine("Descrição muito longa (máximo de 255 caracteres).");
-                descricao = "";
-            }
-        }
-
-        interesse.Descricao = descricao.Trim();
-
-        // Todo interesse novo começa como "Pendente"
-        interesse.IdStatus = banco.BuscarIdStatusPorNome("Pendente");
+        interesse.IdStatus = 1;
 
         interesse.Tipo = usuario.TipoParticipacao;
 
@@ -512,17 +452,7 @@ class Program
             // Formatação do telefone
             if (!string.IsNullOrWhiteSpace(usuario.Telefone))
             {
-                // Considera só os números (o front pode guardar com máscara)
-                string numeros = new string(usuario.Telefone.Where(char.IsDigit).ToArray());
-
-                if (numeros.Length == 11)
-                {
-                    Console.WriteLine($"Telefone: {Convert.ToUInt64(numeros).ToString(@"\(00\) 00000\-0000")}");
-                }
-                else
-                {
-                    Console.WriteLine($"Telefone: {usuario.Telefone}");
-                }
+                Console.WriteLine($"Telefone: {Convert.ToUInt64(usuario.Telefone).ToString(@"\(00\) 00000\-0000")}");
             }
 
             Console.WriteLine($"Email: {usuario.Email}");
@@ -582,28 +512,11 @@ class Program
 
             Console.WriteLine($"Nome: {usuario.Nome}");
 
-            // Formatação do CPF e do telefone (considera só os números,
-            // pra não dar erro se algum registro vier com máscara)
-            string cpfNumeros = new string((usuario.Cpf ?? "").Where(char.IsDigit).ToArray());
-            string telNumeros = new string((usuario.Telefone ?? "").Where(char.IsDigit).ToArray());
+            // Formatação do CPF
+            Console.WriteLine($"CPF: {Convert.ToUInt64(usuario.Cpf).ToString(@"000\.000\.000\-00")}");
 
-            if (cpfNumeros.Length == 11)
-            {
-                Console.WriteLine($"CPF: {Convert.ToUInt64(cpfNumeros).ToString(@"000\.000\.000\-00")}");
-            }
-            else
-            {
-                Console.WriteLine($"CPF: {usuario.Cpf}");
-            }
-
-            if (telNumeros.Length == 11)
-            {
-                Console.WriteLine($"Telefone: {Convert.ToUInt64(telNumeros).ToString(@"\(00\) 00000\-0000")}");
-            }
-            else
-            {
-                Console.WriteLine($"Telefone: {usuario.Telefone}");
-            }
+            // Formatação do telefone
+            Console.WriteLine($"Telefone: {Convert.ToUInt64(usuario.Telefone).ToString(@"\(00\) 00000\-0000")}");
 
             Console.WriteLine($"Email: {usuario.Email}");
             Console.WriteLine($"Endereço: {usuario.Endereco}");
@@ -712,41 +625,36 @@ class Program
         }
 
         Console.WriteLine("\n1 - Pendente");
-        Console.WriteLine("2 - Em andamento");
-        Console.WriteLine("3 - Concluído");
+        Console.WriteLine("2 - Concluído");
+        Console.WriteLine("3 - Cancelado");
 
         Console.Write("Digite o número do novo status: ");
 
         string opcao = Console.ReadLine();
 
-        string nomeStatus;
+        int novoStatus = 0;
 
         switch (opcao)
         {
             case "1":
-                nomeStatus = "Pendente";
+                novoStatus = 1;
                 break;
 
             case "2":
-                nomeStatus = "Em andamento";
+                novoStatus = 2;
                 break;
 
             case "3":
-                nomeStatus = "Concluído";
+                novoStatus = 3;
+                break;
+
+            case "4":
+                novoStatus = 4;
                 break;
 
             default:
                 Console.WriteLine("Opção inválida.");
                 return;
-        }
-
-        // Descobre o id do status pelo nome (não depende de número fixo)
-        int novoStatus = banco.BuscarIdStatusPorNome(nomeStatus);
-
-        if (novoStatus == 0)
-        {
-            Console.WriteLine($"O status \"{nomeStatus}\" não existe no banco. Rode o script banco_completo.sql.");
-            return;
         }
 
         Usuario usuario = banco.BuscarUsuarioPorNome(nome);
@@ -849,22 +757,13 @@ class Program
 
         Console.WriteLine($"Tipo atual: {interesse.Tipo}");
 
-        Console.Write("Novo tipo - doar, receber ou ambos (ENTER para manter): ");
+        Console.Write("Novo tipo (ENTER para manter): ");
 
         string novoTipo = Console.ReadLine();
 
         // Mantém o valor atual caso o usuário pressione ENTER
         if (!string.IsNullOrWhiteSpace(novoTipo))
         {
-            novoTipo = novoTipo.Trim().ToLower();
-
-            // Só aceita os mesmos tipos do front
-            if (novoTipo != "doar" && novoTipo != "receber" && novoTipo != "ambos")
-            {
-                Console.WriteLine("Tipo inválido. Use: doar, receber ou ambos.");
-                return;
-            }
-
             interesse.Tipo = novoTipo;
         }
 
@@ -882,41 +781,31 @@ class Program
 
         Console.WriteLine($"Status atual: {banco.BuscarNomeStatus(interesse.IdStatus)}");
 
-        Console.Write("Novo status (pendente, em andamento ou concluido) ou ENTER para manter: ");
+        Console.Write("Novo status (pendente, concluido ou cancelado) ou ENTER para manter: ");
 
         string opcao = Console.ReadLine().ToLower();
 
         if (!string.IsNullOrWhiteSpace(opcao))
         {
-            string nomeStatus;
+            int novoStatus = 0;
 
-            switch (opcao.Trim())
+            switch (opcao)
             {
                 case "pendente":
-                    nomeStatus = "Pendente";
-                    break;
-
-                case "em andamento":
-                    nomeStatus = "Em andamento";
+                    novoStatus = 2;
                     break;
 
                 case "concluido":
-                case "concluído":
-                    nomeStatus = "Concluído";
+                    novoStatus = 3;
+                    break;
+
+                case "cancelado":
+                    novoStatus = 4;
                     break;
 
                 default:
                     Console.WriteLine("Status inválido.");
                     return;
-            }
-
-            // Descobre o id do status pelo nome (não depende de número fixo)
-            int novoStatus = banco.BuscarIdStatusPorNome(nomeStatus);
-
-            if (novoStatus == 0)
-            {
-                Console.WriteLine($"O status \"{nomeStatus}\" não existe no banco. Rode o script banco_completo.sql.");
-                return;
             }
 
             interesse.IdStatus = novoStatus;
@@ -1258,7 +1147,7 @@ class Program
         int opcaoAdmin = 0;
 
         // Loop do menu administrador
-        while (opcaoAdmin != 20)
+        while (opcaoAdmin != 17)
         {
             Console.WriteLine("\n=== MENU ADMINISTRATIVO ===");
 
@@ -1278,10 +1167,7 @@ class Program
             Console.WriteLine("14 - Editar perfil da ONG");
             Console.WriteLine("15 - Cadastrar administrador");
             Console.WriteLine("16 - Cadastrar atendente");
-            Console.WriteLine("17 - Remover usuário");
-            Console.WriteLine("18 - Listar administradores");
-            Console.WriteLine("19 - Listar atendentes");
-            Console.WriteLine("20 - Sair");
+            Console.WriteLine("17 - Sair");
 
             Console.Write("Escolha uma opção: ");
 
@@ -1359,18 +1245,6 @@ class Program
                     break;
 
                 case 17:
-                    RemoverUsuario();
-                    break;
-
-                case 18:
-                    ListarAdministradores();
-                    break;
-
-                case 19:
-                    ListarAtendentes();
-                    break;
-
-                case 20:
                     Console.WriteLine("Saindo da área administrativa.");
                     break;
 
@@ -1561,23 +1435,24 @@ class Program
     // Método responsável pelos lembretes de saúde
     static void LembreteSaude()
     {
-        Console.WriteLine("\n=== LEMBRETES DE SAÚDE ===");
+        Console.WriteLine("\n=== MENSAGENS DE SAÚDE ===");
 
-        Console.WriteLine("• Tome os medicamentos corretamente");
-        Console.WriteLine("• Beba bastante água");
-        Console.WriteLine("• Faça exames regularmente");
-        Console.WriteLine("• Mantenha alimentação saudável");
+        Console.WriteLine("• Não esqueça de beber água.");
+        Console.WriteLine("• Mantenha seus exames em dia.");
+        Console.WriteLine("• Faça caminhadas regularmente.");
+        Console.WriteLine("• Em caso de dúvidas, procure ajuda da ONG.");
     }
 
     // Método responsável pelos alertas de golpes
     static void PrevençãodeGolpes()
     {
-        Console.WriteLine("\n=== PREVENÇÃO DE GOLPES ===");
+        Console.WriteLine("\n=== ALERTAS DE SEGURANÇA ===");
 
-        Console.WriteLine("• Nunca compartilhe senhas");
-        Console.WriteLine("• Desconfie de ligações bancárias");
-        Console.WriteLine("• Não clique em links desconhecidos");
-        Console.WriteLine("• Confirme informações com familiares");
+        Console.WriteLine("• Não compartilhe senhas.");
+        Console.WriteLine("• A ONG não solicita pagamentos.");
+        Console.WriteLine("• Confirme informações antes de doar.");
+        Console.WriteLine("• Desconfie de links suspeitos.");
+        Console.WriteLine("• Nunca informe dados bancários para desconhecidos.");
     }
 
     // Método responsável por editar usuários
@@ -1921,84 +1796,6 @@ class Program
     }
 
     // Método responsável por editar administradores
-    // Método responsável por remover usuários (somente administrador)
-    static void RemoverUsuario()
-    {
-        Console.WriteLine("\n=== REMOVER USUÁRIO ===");
-
-        List<Usuario> lista = banco.ListarUsuarios();
-
-        foreach (Usuario item in lista)
-        {
-            Console.WriteLine($"Nome: {item.Nome} | CPF: {item.Cpf}");
-        }
-
-        Console.Write("Digite o CPF do usuário que deseja remover: ");
-
-        string cpf = Console.ReadLine();
-
-        // Aceita CPF com ponto e traço, valida só os números
-        cpf = new string((cpf ?? "").Where(char.IsDigit).ToArray());
-
-        Usuario usuario = banco.BuscarUsuarioPorCpf(cpf);
-
-        if (usuario == null)
-        {
-            Console.WriteLine("Usuário não encontrado.");
-            return;
-        }
-
-        Console.Write($"Tem certeza que deseja remover {usuario.Nome}? Os interesses dele também serão apagados. (S/N): ");
-
-        string confirmacao = Console.ReadLine();
-
-        if (confirmacao == null || confirmacao.Trim().ToUpper() != "S")
-        {
-            Console.WriteLine("Remoção cancelada.");
-            return;
-        }
-
-        banco.RemoverUsuario(usuario.IdUsuario);
-
-        Console.WriteLine("Usuário removido com sucesso!");
-    }
-
-    // Método responsável por listar administradores
-    static void ListarAdministradores()
-    {
-        Console.WriteLine("\n=== ADMINISTRADORES ===");
-
-        List<Admin> administradores = banco.ListarAdministradores();
-
-        foreach (Admin admin in administradores)
-        {
-            Console.WriteLine($"Nome: {admin.Nome} | Email: {admin.Email}");
-        }
-
-        if (administradores.Count == 0)
-        {
-            Console.WriteLine("Nenhum administrador cadastrado.");
-        }
-    }
-
-    // Método responsável por listar atendentes
-    static void ListarAtendentes()
-    {
-        Console.WriteLine("\n=== ATENDENTES ===");
-
-        List<Atendente> atendentes = banco.ListarAtendentes();
-
-        foreach (Atendente atendente in atendentes)
-        {
-            Console.WriteLine($"Nome: {atendente.Nome} | Email: {atendente.Email}");
-        }
-
-        if (atendentes.Count == 0)
-        {
-            Console.WriteLine("Nenhum atendente cadastrado.");
-        }
-    }
-
     static void EditarAdministrador()
     {
         Console.WriteLine("\n=== EDITAR ADMINISTRADOR ===");
@@ -2061,64 +1858,6 @@ class Program
             emailAtual,
             novoEmail,
             novaSenha);
-
-        // Nome (mesma regra do cadastro: só letras e espaços)
-        bool nomeValido = false;
-
-        while (!nomeValido)
-        {
-            Console.Write("Novo nome (ENTER para manter): ");
-
-            string novoNome = Console.ReadLine();
-
-            if (string.IsNullOrWhiteSpace(novoNome))
-            {
-                nomeValido = true;
-            }
-            else if (novoNome.All(c => char.IsLetter(c) || char.IsWhiteSpace(c)))
-            {
-                banco.AtualizarNomeAdministrador(novoEmail, novoNome.Trim());
-                nomeValido = true;
-            }
-            else
-            {
-                Console.WriteLine("Nome inválido.");
-            }
-        }
-
-        // Celular (DDD + número = 11 dígitos)
-        bool celularValido = false;
-
-        while (!celularValido)
-        {
-            Console.Write("Novo celular (ENTER para manter): ");
-
-            string novoCelular = Console.ReadLine();
-
-            if (string.IsNullOrWhiteSpace(novoCelular))
-            {
-                celularValido = true;
-            }
-            else if (novoCelular.Length == 11 &&
-                     novoCelular.All(char.IsDigit))
-            {
-                try
-                {
-                    banco.AtualizarTelefoneAdministrador(novoEmail, novoCelular);
-                }
-                catch (Exception erro)
-                {
-                    Console.WriteLine("Não foi possível salvar o celular: " + erro.Message);
-                    Console.WriteLine("Rode o script banco_completo.sql (ele cria essa coluna).");
-                }
-
-                celularValido = true;
-            }
-            else
-            {
-                Console.WriteLine("Telefone inválido.");
-            }
-        }
 
         Console.WriteLine("Administrador atualizado com sucesso!");
     }
