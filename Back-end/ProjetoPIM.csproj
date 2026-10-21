@@ -11,5 +11,9 @@
     <PackageReference Include="BCrypt.Net-Next" Version="4.2.0" />
     <PackageReference Include="System.Data.SqlClient" Version="4.9.1" />
   </ItemGroup>
-
+	<ItemGroup>
+		<Compile Remove="ConectaApi\**" />
+		<EmbeddedResource Remove="ConectaApi\**" />
+		<None Remove="ConectaApi\**" />
+	</ItemGroup>
 </Project>
