@@ -5,444 +5,343 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cadastro - Conecta++</title>
     <link rel="stylesheet" href="../css/cadastro.css">
-    <script src="../js/validacoes.js"></script>
 </head>
 <body>
 
     <main class="tela">
         <section class="card cadastro-card" id="etapaCadastro">
-            <h1>Faça seu cadastro</h1>
+    <h1>Faça seu cadastro</h1>
 
-            <form id="formCadastro">
-                <input type="text" id="nome" placeholder="Nome completo">
-                <input type="email" id="email" placeholder="E-mail">
-                <input type="tel" id="telefone" placeholder="Telefone">
-                <input type="text" id="cpf" placeholder="CPF">
+    <form id="formCadastro">
+        <input type="text" id="nome" placeholder="Nome completo">
+        <input type="email" id="email" placeholder="E-mail">
+        <input type="tel" id="telefone" placeholder="Telefone">
+        <input type="text" id="cpf" placeholder="CPF">
 
-                <input type="text" id="cep" placeholder="CEP">
-                <input type="text" id="numero" placeholder="Número">
-                <input type="text" id="rua" placeholder="Rua" readonly>
-                <input type="text" id="bairro" placeholder="Bairro" readonly>
-                <input type="text" id="cidade" placeholder="Cidade" readonly>
-                <input type="text" id="estado" placeholder="Estado" readonly>
+        <input type="text" id="cep" placeholder="CEP">
+        <input type="text" id="numero" placeholder="Número">
+        <input type="text" id="rua" placeholder="Rua" readonly>
+        <input type="text" id="bairro" placeholder="Bairro" readonly>
+        <input type="text" id="cidade" placeholder="Cidade" readonly>
+        <input type="text" id="estado" placeholder="Estado" readonly>
 
-                <input type="text"
-                       id="dataNascimento"
-                       placeholder="Data de nascimento"
-                       onfocus="this.type='date'"
-                       onblur="if(!this.value){this.type='text'}">
+        <input type="date" id="dataNascimento">
 
-                <button type="submit" class="btn-cadastrar">Cadastrar</button>
-            </form>
-        </section>
+        <button type="submit" class="btn-cadastrar">Cadastrar</button>
+    </form>
+</section>
 
-        <section class="card escolha-card hidden" id="etapaEscolha">
-            <h1>O que deseja fazer?</h1>
+<section class="card escolha-card hidden" id="etapaEscolha">
+    <h1>O que deseja fazer?</h1>
 
-            <div class="botoes-escolha">
-                <button type="button" class="btn-opcao" onclick="selecionarOpcao('doar')">
-                    Quero doar
-                </button>
+    <div class="botoes-escolha">
+        <button type="button" class="btn-opcao" onclick="selecionarOpcao('doar')">
+            Quero doar
+        </button>
 
-                <button type="button" class="btn-opcao" onclick="selecionarOpcao('receber')">
-                    Quero receber doação
-                </button>
+        <button type="button" class="btn-opcao" onclick="selecionarOpcao('receber')">
+            Quero receber doação
+        </button>
 
-                <button type="button" class="btn-opcao" onclick="selecionarOpcao('ambos')">
-                    Ambos
-                </button>
-            </div>
-        </section>
+        <button type="button" class="btn-opcao" onclick="selecionarOpcao('ambos')">
+            Ambos
+        </button>
+    </div>
+</section>
 
-        <section class="card mensagem-card hidden" id="etapaMensagem">
-            <div class="icone-sucesso">✓</div>
+<section class="card mensagem-card hidden" id="etapaMensagem">
+    <div class="icone-sucesso">✓</div>
 
-            <h1>Cadastro realizado com sucesso!</h1>
+    <h1>Cadastro realizado com sucesso!</h1>
 
-            <p>
-                O Sistema de Apoio ao Idoso agradece seu cadastro.<br><br>
-                A ONG entrará em contato com você via WhatsApp para mais informações.
-            </p>
-
-            <p id="contagemRedirecionamento" class="texto-contagem"></p>
-
-            <a href="index.html" class="btn-azul btn-voltar-inicio">
-                Voltar para a Página Inicial
-            </a>
-        </section>
+    <p>
+        O Sistema de Apoio ao Idoso agradece seu cadastro.<br><br>
+        A ONG entrará em contato com você via WhatsApp para mais informações.
+    </p>
+</section>
     </main>
-    <section class="card necessidade-card hidden" id="etapaNecessidade">
-        <h1 id="tituloNecessidade">Qual é a sua necessidade?</h1>
+<section class="card necessidade-card hidden" id="etapaNecessidade">
+    <h1>Qual é a sua necessidade?</h1>
 
-        <textarea id="necessidadeTexto" placeholder="Escreva aqui sua necessidade"></textarea>
+    <textarea id="necessidadeTexto" placeholder="Escreva aqui sua necessidade"></textarea>
 
-        <button type="button" class="btn-opcao" onclick="irParaSucesso()">
-            Continuar
-        </button>
+    <button type="button" class="btn-opcao" onclick="irParaSucesso()">
+        Continuar
+    </button>
+</section>
+  <script>
 
-        <button type="button" class="btn-voltar-etapa" onclick="voltarParaEscolha()">
-            ← Voltar
-        </button>
-    </section>
-    <script>
+document.addEventListener("DOMContentLoaded", function () {
 
-        document.addEventListener("DOMContentLoaded", function () {
+    const formCadastro = document.getElementById("formCadastro");
 
-            const formCadastro = document.getElementById("formCadastro");
+    const etapaCadastro = document.getElementById("etapaCadastro");
+    const etapaEscolha = document.getElementById("etapaEscolha");
+    const etapaNecessidade = document.getElementById("etapaNecessidade");
+    const etapaMensagem = document.getElementById("etapaMensagem");
 
-            const etapaCadastro = document.getElementById("etapaCadastro");
-            const etapaEscolha = document.getElementById("etapaEscolha");
-            const etapaNecessidade = document.getElementById("etapaNecessidade");
-            const etapaMensagem = document.getElementById("etapaMensagem");
+    /* ========================================= */
+    /* CAMPOS */
+    /* ========================================= */
 
-            /* ========================================= */
-            /* CAMPOS */
-            /* ========================================= */
+    const cepInput = document.getElementById("cep");
 
-            const cepInput = document.getElementById("cep");
+    const ruaInput = document.getElementById("rua");
+    const bairroInput = document.getElementById("bairro");
+    const cidadeInput = document.getElementById("cidade");
+    const estadoInput = document.getElementById("estado");
 
-            const ruaInput = document.getElementById("rua");
-            const bairroInput = document.getElementById("bairro");
-            const cidadeInput = document.getElementById("cidade");
-            const estadoInput = document.getElementById("estado");
+    /* ========================================= */
+    /* BUSCAR CEP */
+    /* ========================================= */
 
-            /* ========================================= */
-            /* BUSCAR CEP */
-            /* ========================================= */
+    async function buscarCep(cepBruto) {
 
-            async function buscarCep(cepBruto) {
+        const cep = cepBruto.replace(/\D/g, "");
 
-                const cep = cepBruto.replace(/\D/g, "");
+        if (cep.length !== 8) {
+            return;
+        }
 
-                if (cep.length !== 8) {
-                    return;
-                }
+        try {
 
-                try {
+            const resposta = await fetch(
+                `https://viacep.com.br/ws/${cep}/json/`
+            );
 
-                    const resposta = await fetch(
-                        `https://viacep.com.br/ws/${cep}/json/`
-                    );
-
-                    if (!resposta.ok) {
-                        throw new Error("Erro ao buscar CEP");
-                    }
-
-                    const data = await resposta.json();
-
-                    if (data.erro) {
-                        alert("CEP não encontrado.");
-                        return;
-                    }
-
-                    ruaInput.value = data.logradouro || "";
-                    bairroInput.value = data.bairro || "";
-                    cidadeInput.value = data.localidade || "";
-                    estadoInput.value = data.uf || "";
-
-                    /* campo que o CEP não preencheu fica liberado pra digitar */
-                    [ruaInput, bairroInput, cidadeInput, estadoInput].forEach(function (campo) {
-                        campo.readOnly = campo.value !== "";
-                    });
-
-                } catch (erro) {
-
-                    console.error(erro);
-
-                    alert("Erro ao buscar CEP.");
-
-                }
+            if (!resposta.ok) {
+                throw new Error("Erro ao buscar CEP");
             }
 
-            cepInput.addEventListener("blur", function () {
-                buscarCep(this.value);
-            });
+            const data = await resposta.json();
 
-            /* ========================================= */
-            /* CADASTRO */
-            /* ========================================= */
+            if (data.erro) {
+                alert("CEP não encontrado.");
+                return;
+            }
 
-            formCadastro.addEventListener("submit", function (event) {
+            ruaInput.value = data.logradouro || "";
+            bairroInput.value = data.bairro || "";
+            cidadeInput.value = data.localidade || "";
+            estadoInput.value = data.uf || "";
 
-                event.preventDefault();
+        } catch (erro) {
 
-                const nome = document.getElementById("nome").value.trim();
+            console.error(erro);
 
-                const email = document.getElementById("email").value.trim();
+            alert("Erro ao buscar CEP.");
 
-                const telefone = document.getElementById("telefone").value.trim();
+        }
+    }
 
-                const cpf = document.getElementById("cpf").value.trim();
+    cepInput.addEventListener("blur", function () {
+        buscarCep(this.value);
+    });
 
-                const cep = document.getElementById("cep").value.trim();
+    /* ========================================= */
+    /* CADASTRO */
+    /* ========================================= */
 
-                const numero = document.getElementById("numero").value.trim();
+    formCadastro.addEventListener("submit", function (event) {
 
-                const rua = ruaInput.value.trim();
+        event.preventDefault();
 
-                const bairro = bairroInput.value.trim();
+        const nome = document.getElementById("nome").value.trim();
 
-                const cidade = cidadeInput.value.trim();
+        const email = document.getElementById("email").value.trim();
 
-                const estado = estadoInput.value.trim();
+        const telefone = document.getElementById("telefone").value.trim();
 
-                const dataNascimento = document
-                    .getElementById("dataNascimento")
-                    .value;
+        const cpf = document.getElementById("cpf").value.trim();
 
-                /* mesmas validações do back-end, na mesma ordem */
-                const verificacoes = [
-                    [Validacoes.nome(nome), "nome"],
-                    [Validacoes.cpf(cpf), "cpf"],
-                    [Validacoes.cpfJaCadastrado(cpf) ? "CPF já cadastrado." : "", "cpf"],
-                    [Validacoes.telefone(telefone), "telefone"],
-                    [Validacoes.emailOpcional(email), "email"],
-                    [Validacoes.cep(cep), "cep"],
-                    [Validacoes.numeroCasa(numero), "numero"],
-                    [Validacoes.rua(rua), "rua"],
-                    [Validacoes.bairro(bairro), "bairro"],
-                    [Validacoes.cidade(cidade), "cidade"],
-                    [Validacoes.enderecoCompleto(rua, numero, bairro, cidade), "rua"],
-                    [Validacoes.estado(estado), "estado"],
-                    [Validacoes.dataNascimento(dataNascimento), "dataNascimento"]
-                ];
+        const cep = document.getElementById("cep").value.trim();
 
-                for (const [mensagem, idCampo] of verificacoes) {
-                    if (mensagem) {
-                        alert(mensagem);
-                        const campo = document.getElementById(idCampo);
-                        if (campo) campo.focus();
-                        return;
-                    }
-                }
+        const numero = document.getElementById("numero").value.trim();
 
-                /* ========================================= */
-                /* ENDEREÇO */
-                /* ========================================= */
+        const rua = ruaInput.value.trim();
 
-                const enderecoCompleto =
-                    `${rua}, ${numero} - ${bairro}, ${cidade}/${estado}`;
+        const bairro = bairroInput.value.trim();
 
-                /* ========================================= */
-                /* SALVAR USUÁRIOS */
-                /* ========================================= */
+        const cidade = cidadeInput.value.trim();
 
-                const usuariosCadastrados = JSON.parse(
-                    localStorage.getItem("usuariosCadastrados") || "[]"
-                );
+        const estado = estadoInput.value.trim();
 
-                usuariosCadastrados.unshift({
+        const dataNascimento = document
+            .getElementById("dataNascimento")
+            .value;
 
-                    nome,
-                    email,
-                    telefone,
-                    cpf,
+        if (
+            !nome ||
+            !email ||
+            !telefone ||
+            !cpf ||
+            !cep ||
+            !numero
+        ) {
 
-                    endereco: enderecoCompleto,
+            alert("Preencha todos os campos.");
+            return;
+        }
 
-                    dataNascimento
+        /* ========================================= */
+        /* ENDEREÇO */
+        /* ========================================= */
 
-                });
+        const enderecoCompleto =
+            `${rua}, ${numero} - ${bairro}, ${cidade}/${estado}`;
 
-                localStorage.setItem(
-                    "usuariosCadastrados",
-                    JSON.stringify(usuariosCadastrados)
-                );
+        /* ========================================= */
+        /* SALVAR USUÁRIOS */
+        /* ========================================= */
 
-                /* ========================================= */
-                /* CADASTRO TEMPORÁRIO */
-                /* ========================================= */
+        const resposta = await fetch("http://localhost:5000/usuarios", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                nome,
+                email,
+                telefone,
+                cpf,
+                endereco: enderecoCompleto,
+                cidade,
+                estado,
+                dataNascimento
+            })
+        });
 
-                const cadastroAtual = {
+        if (!resposta.ok) {
+            const erro = await resposta.json().catch(() => ({}));
+            alert(erro.erro || "Erro ao cadastrar. Tente de novo.");
+            return;
+        }
 
-                    nome,
-                    email,
-                    telefone,
-                    cpf,
+        /* ========================================= */
+        /* CADASTRO TEMPORÁRIO */
+        /* ========================================= */
 
-                    endereco: enderecoCompleto,
+        const cadastroAtual = {
 
-                    dataNascimento
+            nome,
+            email,
+            telefone,
+            cpf,
 
-                };
+            endereco: enderecoCompleto,
 
-                localStorage.setItem(
-                    "cadastroAtual",
-                    JSON.stringify(cadastroAtual)
-                );
+            dataNascimento
 
-                etapaCadastro.classList.add("hidden");
+        };
 
-                etapaEscolha.classList.remove("hidden");
+        localStorage.setItem(
+            "cadastroAtual",
+            JSON.stringify(cadastroAtual)
+        );
 
-            });
+        etapaCadastro.classList.add("hidden");
 
-            /* ========================================= */
-            /* ESCOLHER OPÇÃO */
-            /* ========================================= */
+        etapaEscolha.classList.remove("hidden");
 
-            const tituloNecessidade = document.getElementById("tituloNecessidade");
-            const necessidadeTextoInput = document.getElementById("necessidadeTexto");
+    });
 
-            const textosPorOpcao = {
+    /* ========================================= */
+    /* ESCOLHER OPÇÃO */
+    /* ========================================= */
 
-                doar: {
-                    titulo: "O que você gostaria de doar?",
-                    placeholder: "Ex: roupas, brinquedos, móveis, alimentos..."
-                },
+    window.selecionarOpcao = function (opcao) {
 
-                receber: {
-                    titulo: "Qual é a sua necessidade?",
-                    placeholder: "Escreva aqui do que você precisa"
-                },
+        localStorage.setItem(
+            "opcaoCadastro",
+            opcao
+        );
 
-                ambos: {
-                    titulo: "Conte um pouco sobre sua doação e sua necessidade",
-                    placeholder: "Ex: quero doar roupas e também preciso de móveis..."
-                }
+        etapaEscolha.classList.add("hidden");
 
-            };
+        etapaNecessidade.classList.remove("hidden");
 
-            window.selecionarOpcao = function (opcao) {
+    };
 
-                localStorage.setItem(
-                    "opcaoCadastro",
-                    opcao
-                );
+    /* ========================================= */
+    /* FINALIZAR */
+    /* ========================================= */
 
-                const textos = textosPorOpcao[opcao];
+    window.irParaSucesso = function () {
 
-                if (textos) {
-                    tituloNecessidade.textContent = textos.titulo;
-                    necessidadeTextoInput.placeholder = textos.placeholder;
-                }
+        const necessidade = document
+            .getElementById("necessidadeTexto")
+            .value
+            .trim();
 
-                etapaEscolha.classList.add("hidden");
+        if (!necessidade) {
 
-                etapaNecessidade.classList.remove("hidden");
+            alert("Escreva sua necessidade.");
 
-            };
+            return;
+        }
 
-            window.voltarParaEscolha = function () {
+        const cadastroAtual = JSON.parse(
+            localStorage.getItem("cadastroAtual") || "null"
+        );
 
-                etapaNecessidade.classList.add("hidden");
+        const opcao = localStorage.getItem(
+            "opcaoCadastro"
+        ) || "";
 
-                etapaEscolha.classList.remove("hidden");
+        if (!cadastroAtual) {
 
-            };
+            alert("Cadastro não encontrado.");
 
-            /* ========================================= */
-            /* FINALIZAR */
-            /* ========================================= */
+            return;
+        }
 
-            window.irParaSucesso = function () {
+        /* ========================================= */
+        /* INTERESSES */
+        /* ========================================= */
 
-                const necessidade = document
-                    .getElementById("necessidadeTexto")
-                    .value
-                    .trim();
+        const interesses = JSON.parse(
+            localStorage.getItem("interessesCadastrados") || "[]"
+        );
 
-                const erroDescricao = Validacoes.descricao(necessidade);
+        interesses.unshift({
 
-                if (erroDescricao) {
+            nome: cadastroAtual.nome,
 
-                    alert(erroDescricao);
+            tipo: opcao,
 
-                    return;
-                }
+            necessidade: necessidade,
 
-                const cadastroAtual = JSON.parse(
-                    localStorage.getItem("cadastroAtual") || "null"
-                );
+            status: "Pendente",
 
-                const opcao = localStorage.getItem(
-                    "opcaoCadastro"
-                ) || "";
-
-                if (!cadastroAtual) {
-
-                    alert("Cadastro não encontrado.");
-
-                    return;
-                }
-
-                /* ========================================= */
-                /* INTERESSES */
-                /* ========================================= */
-
-                const interesses = JSON.parse(
-                    localStorage.getItem("interessesCadastrados") || "[]"
-                );
-
-                interesses.unshift({
-
-                    nome: cadastroAtual.nome,
-
-                    tipo: opcao,
-
-                    necessidade: necessidade,
-
-                    status: "Pendente",
-
-                    dataSolicitacao:
-                        new Date().toLocaleDateString("pt-BR")
-
-                });
-
-                localStorage.setItem(
-                    "interessesCadastrados",
-                    JSON.stringify(interesses)
-                );
-
-                /* ========================================= */
-                /* LIMPAR */
-                /* ========================================= */
-
-                localStorage.removeItem("cadastroAtual");
-
-                localStorage.removeItem("opcaoCadastro");
-
-                /* ========================================= */
-                /* TELA SUCESSO */
-                /* ========================================= */
-
-                etapaNecessidade.classList.add("hidden");
-
-                etapaMensagem.classList.remove("hidden");
-
-                /* ========================================= */
-                /* REDIRECIONAMENTO AUTOMÁTICO */
-                /* ========================================= */
-
-                let segundosRestantes = 8;
-
-                const contagemTexto = document.getElementById(
-                    "contagemRedirecionamento"
-                );
-
-                function atualizarContagem() {
-
-                    contagemTexto.textContent =
-                        `Você será redirecionado em ${segundosRestantes} segundos...`;
-
-                    if (segundosRestantes <= 0) {
-                        window.location.href = "index.html";
-                        return;
-                    }
-
-                    segundosRestantes--;
-
-                    setTimeout(atualizarContagem, 1000);
-
-                }
-
-                atualizarContagem();
-
-            };
+            dataSolicitacao:
+                new Date().toLocaleDateString("pt-BR")
 
         });
 
-    </script>
+        localStorage.setItem(
+            "interessesCadastrados",
+            JSON.stringify(interesses)
+        );
+
+        /* ========================================= */
+        /* LIMPAR */
+        /* ========================================= */
+
+        localStorage.removeItem("cadastroAtual");
+
+        localStorage.removeItem("opcaoCadastro");
+
+        /* ========================================= */
+        /* TELA SUCESSO */
+        /* ========================================= */
+
+        etapaNecessidade.classList.add("hidden");
+
+        etapaMensagem.classList.remove("hidden");
+
+    };
+
+});
+
+</script>
 
 </body>
 </html>
