@@ -80,6 +80,12 @@ app.MapPost("/auth/login-admin", (Banco banco, LoginDados dados) =>
 
     return Results.Unauthorized();
 });
+// Remover usuário (e os interesses dele)
+app.MapDelete("/usuarios/{id}", (Banco banco, int id) =>
+{
+    banco.RemoverUsuario(id);
+    return Results.Ok();
+});
 
 app.Run();
 record NovoUsuario(string Nome, string Email, string Telefone, string Cpf,
