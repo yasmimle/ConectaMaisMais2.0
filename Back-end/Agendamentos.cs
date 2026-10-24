@@ -69,6 +69,46 @@ public static class AgendamentosApi
         return R * 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
     }
 
+    // Procura as coordenadas de um endereco no OpenStreetMap (gratis, sem chave).
+    // Se nao achar ou se a internet falhar, devolve null (e o agendamento segue sem conferir a distancia).
+    static readonly HttpClient clienteMapa = CriarClienteMapa();
+
+    static HttpClient CriarClienteMapa()
+    {
+        var cliente = new HttpClient();
+        cliente.Timeout = TimeSpan.FromSeconds(6);
+        cliente.DefaultRequestHeaders.UserAgent.ParseAdd("ConectaMaisMais-PIM/1.0 (projeto academico)");
+        return cliente;
+    }
+
+    static async Task<(double Lat, double Lon)?> Geocodificar(string endereco)
+    {
+        if (string.IsNullOrWhiteSpace(endereco)) return null;
+
+        try
+        {
+            var url = "https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=br&q="
+                      + Uri.EscapeDataString(endereco.Trim());
+
+            using var resposta = await clienteMapa.GetAsync(url);
+            if (!resposta.IsSuccessStatusCode) return null;
+
+            var json = await resposta.Content.ReadAsStringAsync();
+            using var doc = System.Text.Json.JsonDocument.Parse(json);
+
+            if (doc.RootElement.GetArrayLength() == 0) return null;
+
+            var primeiro = doc.RootElement[0];
+            double lat = double.Parse(primeiro.GetProperty("lat").GetString(), CultureInfo.InvariantCulture);
+            double lon = double.Parse(primeiro.GetProperty("lon").GetString(), CultureInfo.InvariantCulture);
+            return (lat, lon);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
     static string Texto(object valor)
     {
         return valor == DBNull.Value ? "" : valor.ToString();
@@ -242,7 +282,7 @@ public static class AgendamentosApi
         });
 
         // Novo agendamento: calcula duracao e distancia, escolhe o ajudante e grava.
-        app.MapPost("/agendamentos", (Banco banco, NovoAgendamento dados) =>
+        app.MapPost("/agendamentos", async (Banco banco, IConfiguration config, NovoAgendamento dados) =>
         {
             if (!TentaData(dados.Data, out var data))
                 return Results.BadRequest(new { erro = "Data invalida. Use yyyy-MM-dd." });
@@ -270,6 +310,20 @@ public static class AgendamentosApi
             else if (dados.DistanciaKm.HasValue)
             {
                 distancia = Math.Round(dados.DistanciaKm.Value, 2);
+            }
+            else if (config["Mapa:ConferirEndereco"] == "true")
+            {
+                // Nenhum valor veio do app: tenta descobrir pelos enderecos (origem e destino).
+                var pontoOrigem = await Geocodificar(dados.Origem);
+                await Task.Delay(1100); // o servico de mapas pede no maximo 1 consulta por segundo
+                var pontoDestino = await Geocodificar(dados.Destino);
+
+                if (pontoOrigem.HasValue && pontoDestino.HasValue)
+                {
+                    distancia = Math.Round((decimal)DistanciaEntrePontos(
+                        pontoOrigem.Value.Lat, pontoOrigem.Value.Lon,
+                        pontoDestino.Value.Lat, pontoDestino.Value.Lon), 2);
+                }
             }
 
             if (distancia.HasValue && (distancia.Value < 0 || distancia.Value > LIMITE_KM))
@@ -304,7 +358,7 @@ public static class AgendamentosApi
                 cmd.Parameters.AddWithValue("@DISTANCIA_KM", distancia.HasValue ? (object)distancia.Value : DBNull.Value);
 
                 var id = Convert.ToInt32(cmd.ExecuteScalar());
-                return Results.Ok(new { id, idAjudante = idAjudante.Value, duracaoMin = duracao, distanciaKm = distancia });
+                return Results.Ok(new { id, idAjudante = idAjudante.Value, duracaoMin = duracao, distanciaKm = distancia, distanciaConferida = distancia.HasValue });
             }
             catch (SqlException ex)
             {
