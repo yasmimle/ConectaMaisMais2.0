@@ -1,3 +1,9 @@
 bin/
 obj/
 .vs/
+*/build/
+.gradle/
+.idea/
+local.properties
+hs_err_pid.log
+replay_pid*.log
