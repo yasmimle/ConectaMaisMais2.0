@@ -320,49 +320,47 @@
                             document.documentElement.style.zoom = zoomAtual;
                         }</script>
     <script>
-                        function entrarAdmin() {
+                        async function entrarAdmin() {
                             const usuario = document.getElementById("loginAdmin").value.trim().toLowerCase();
                             const senha = document.getElementById("senhaAdmin").value.trim();
 
-                            /* administradores criados pelo painel */
-                            const administradores =
-                                JSON.parse(localStorage.getItem("administradores")) || [];
+                            if (!usuario || !senha) {
+                                alert("Preencha o login e a senha.");
+                                return;
+                            }
 
-                            const adminEncontrado = administradores.find(
-                                a => (a.email || "").trim().toLowerCase() === usuario
-                                    && a.senha === senha
-                            );
+                            let resposta;
+                            try {
+                                resposta = await fetch("http://localhost:5000/auth/login-admin", {
+                                    method: "POST",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({ email: usuario, senha: senha })
+                                });
+                            } catch (erro) {
+                                alert("Não foi possível falar com o servidor. Confira se a API está ligada.");
+                                return;
+                            }
 
-                            if (adminEncontrado) {
-                                localStorage.setItem("tipoUsuario", "administrador");
-                                localStorage.setItem("adminEmail", adminEncontrado.email);
-                                localStorage.setItem("adminNome", adminEncontrado.nome);
+                            if (!resposta.ok) {
+                                alert("Login ou senha incorretos!");
+                                return;
+                            }
+
+                            const dados = await resposta.json();
+
+                            localStorage.setItem("tipoUsuario", dados.tipo);
+                            localStorage.setItem("adminEmail", dados.email);
+                            localStorage.setItem("adminNome", dados.nome);
+
+                            if (dados.tipo === "atendente") {
+                                localStorage.setItem("atendenteEmail", dados.email);
+                                localStorage.setItem("atendenteNome", dados.nome);
+                                window.location.href = "atendente.html";
+                            } else {
                                 localStorage.removeItem("atendenteEmail");
                                 localStorage.removeItem("atendenteNome");
                                 window.location.href = "admin.html";
-                                return;
                             }
-
-                            /* atendentes criados pelo painel */
-                            const atendentes =
-                                JSON.parse(localStorage.getItem("atendentes")) || [];
-
-                            const atendenteEncontrado = atendentes.find(
-                                a => (a.email || "").trim().toLowerCase() === usuario
-                                    && a.senha === senha
-                            );
-
-                            if (atendenteEncontrado) {
-                                localStorage.setItem("tipoUsuario", "atendente");
-                                localStorage.setItem("adminEmail", atendenteEncontrado.email);
-                                localStorage.setItem("adminNome", atendenteEncontrado.nome);
-                                localStorage.setItem("atendenteEmail", atendenteEncontrado.email);
-                                localStorage.setItem("atendenteNome", atendenteEncontrado.nome);
-                                window.location.href = "atendente.html";
-                                return;
-                            }
-
-                            alert("Login ou senha incorretos!");
                         }
 
                         /* Enter confirma o login (admin ou usuário) */

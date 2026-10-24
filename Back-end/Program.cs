@@ -81,6 +81,9 @@ app.MapDelete("/usuarios/{id}", (Banco banco, int id) =>
 // Rotas do app: login por CPF, agendamentos, ajudantes e contato da ONG (arquivo Agendamentos.cs)
 app.MapAgendamentos();
 
+// Rotas do site: interesses, administradores, atendentes, ONG e editar usuário (arquivo PainelApi.cs)
+app.MapPainel();
+
 app.Run();
 
 record NovoUsuario(string Nome, string Email, string Telefone, string Cpf,

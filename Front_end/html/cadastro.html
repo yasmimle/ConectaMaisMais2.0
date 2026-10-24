@@ -142,7 +142,7 @@ document.addEventListener("DOMContentLoaded", function () {
     /* CADASTRO */
     /* ========================================= */
 
-    formCadastro.addEventListener("submit", function (event) {
+    formCadastro.addEventListener("submit", async function (event) {
 
         event.preventDefault();
 
@@ -215,11 +215,15 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
+        const dadosResposta = await resposta.json().catch(() => ({}));
+
         /* ========================================= */
         /* CADASTRO TEMPORÁRIO */
         /* ========================================= */
 
         const cadastroAtual = {
+
+            idUsuario: dadosResposta.id,
 
             nome,
             email,
@@ -264,7 +268,7 @@ document.addEventListener("DOMContentLoaded", function () {
     /* FINALIZAR */
     /* ========================================= */
 
-    window.irParaSucesso = function () {
+    window.irParaSucesso = async function () {
 
         const necessidade = document
             .getElementById("necessidadeTexto")
@@ -286,7 +290,7 @@ document.addEventListener("DOMContentLoaded", function () {
             "opcaoCadastro"
         ) || "";
 
-        if (!cadastroAtual) {
+        if (!cadastroAtual || !cadastroAtual.idUsuario) {
 
             alert("Cadastro não encontrado.");
 
@@ -294,32 +298,31 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         /* ========================================= */
-        /* INTERESSES */
+        /* INTERESSE (vai para o banco pela API) */
         /* ========================================= */
 
-        const interesses = JSON.parse(
-            localStorage.getItem("interessesCadastrados") || "[]"
-        );
+        let respostaInteresse;
 
-        interesses.unshift({
+        try {
+            respostaInteresse = await fetch("http://localhost:5000/interesses", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    idUsuario: cadastroAtual.idUsuario,
+                    tipo: opcao,
+                    descricao: necessidade
+                })
+            });
+        } catch (erroRede) {
+            alert("Não foi possível falar com o servidor. Tente de novo.");
+            return;
+        }
 
-            nome: cadastroAtual.nome,
-
-            tipo: opcao,
-
-            necessidade: necessidade,
-
-            status: "Pendente",
-
-            dataSolicitacao:
-                new Date().toLocaleDateString("pt-BR")
-
-        });
-
-        localStorage.setItem(
-            "interessesCadastrados",
-            JSON.stringify(interesses)
-        );
+        if (!respostaInteresse.ok) {
+            const erro = await respostaInteresse.json().catch(() => ({}));
+            alert(erro.erro || "Erro ao salvar sua necessidade. Tente de novo.");
+            return;
+        }
 
         /* ========================================= */
         /* LIMPAR */
