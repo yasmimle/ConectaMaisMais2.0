@@ -17,4 +17,7 @@ class Ong
 
     // Email da ONG
     public string Email { get; set; }
+
+    // Endereço da ONG
+    public string Endereco { get; set; }
 }

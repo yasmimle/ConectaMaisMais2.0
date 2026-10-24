@@ -32,8 +32,10 @@ OUTPUT INSERTED.ID_USUARIO
 
 VALUES
 (
-6, 
-1,
+COALESCE((SELECT ID_ADMIN FROM ADMIN WHERE ID_ADMIN = 6),
+         (SELECT TOP 1 ID_ADMIN FROM ADMIN ORDER BY ID_ADMIN)),
+COALESCE((SELECT ID_ATENDENTE FROM ATENDENTE WHERE ID_ATENDENTE = 1),
+         (SELECT TOP 1 ID_ATENDENTE FROM ATENDENTE ORDER BY ID_ATENDENTE)),
 @iduf,
 @nome, 
 @cpf, 
@@ -69,7 +71,10 @@ VALUES
 (ID_USUARIO, ID_STATUS, DSC_TIPO, DSC_DESCRICAO, DATA_REGISTRO)
 
 VALUES
-(@idUsuario, 1, @tipo, @descricao, @dataRegistro)";
+(@idUsuario,
+ (SELECT TOP 1 ID_STATUS FROM STATUS
+  WHERE DSC_STATUS COLLATE Latin1_General_CI_AI = 'Pendente'),
+ @tipo, @descricao, @dataRegistro)";
 
         SqlCommand cmd = new SqlCommand(sql, conn);
 
@@ -391,10 +396,10 @@ VALUES
             Console.WriteLine("\n=== DADOS DA ONG ===");
 
             Console.WriteLine($"Nome: {reader["DSC_NOME"]}");
+            Console.WriteLine($"CNPJ: {reader["NUM_CNPJ"]}");
             Console.WriteLine($"Telefone: {reader["NUM_TELEFONE"]}");
             Console.WriteLine($"Email: {reader["DSC_EMAIL"]}");
             Console.WriteLine($"Endereço: {reader["DSC_ENDERECO"]}");
-            Console.WriteLine($"CNPJ: {reader["NUM_CNPJ"]}");
         }
 
         conn.Close();
@@ -412,6 +417,7 @@ VALUES
 SELECT
     I.ID_INTERESSE,
     U.DSC_NOME,
+    I.DSC_TIPO,
     I.DSC_DESCRICAO,
     S.DSC_STATUS,
     I.DATA_REGISTRO
@@ -434,6 +440,7 @@ ORDER BY I.DATA_REGISTRO DESC";
         {
             string texto =
                 $"Usuário: {reader["DSC_NOME"]} | " +
+                $"Tipo: {reader["DSC_TIPO"]} | " +
                 $"Descrição: {reader["DSC_DESCRICAO"]} | " +
                 $"Status: {reader["DSC_STATUS"]} | " +
                 $"Data: {Convert.ToDateTime(reader["DATA_REGISTRO"]):dd/MM/yyyy}";
@@ -585,6 +592,31 @@ WHERE ID_ONG = 1";
         }
 
         return resultado.ToString();
+    }
+
+    // Método responsável por buscar o id de um status pelo nome
+    // (ignora maiúsculas/minúsculas e acentos). Retorna 0 se não existir.
+    public int BuscarIdStatusPorNome(string nome)
+    {
+        SqlConnection conn = AbrirConexao();
+
+        string sql = @"SELECT TOP 1 ID_STATUS FROM STATUS
+                       WHERE DSC_STATUS COLLATE Latin1_General_CI_AI = @nome";
+
+        SqlCommand cmd = new SqlCommand(sql, conn);
+
+        cmd.Parameters.AddWithValue("@nome", nome);
+
+        object resultado = cmd.ExecuteScalar();
+
+        conn.Close();
+
+        if (resultado == null)
+        {
+            return 0;
+        }
+
+        return Convert.ToInt32(resultado);
     }
 
     // Método responsável por buscar a sigla do estado (UF)
@@ -818,6 +850,8 @@ WHERE ID_ONG = 1";
         {
             Admin admin = new Admin();
 
+            admin.Nome = reader["DSC_NOME"].ToString();
+
             admin.Email = reader["DSC_EMAIL"].ToString();
 
             conn.Close();
@@ -912,6 +946,161 @@ WHERE ID_ONG = 1";
             cmd.Parameters.AddWithValue("@senha", senhaCriptografada);
             cmd.Parameters.AddWithValue("@emailAtual", emailAtual);
         }
+
+        cmd.ExecuteNonQuery();
+
+        conn.Close();
+    }
+
+    // Método responsável por remover um usuário (e os interesses dele)
+    public void RemoverUsuario(int idUsuario)
+    {
+        SqlConnection conn = AbrirConexao();
+
+        // Apaga primeiro os interesses do usuário e depois o usuário,
+        // tudo na mesma transação (ou apaga os dois, ou nenhum)
+        string sql = @"
+SET XACT_ABORT ON;
+BEGIN TRANSACTION;
+DELETE FROM INTERESSE WHERE ID_USUARIO = @id;
+DELETE FROM USUARIO WHERE ID_USUARIO = @id;
+COMMIT TRANSACTION;";
+
+        SqlCommand cmd = new SqlCommand(sql, conn);
+
+        cmd.Parameters.AddWithValue("@id", idUsuario);
+
+        cmd.ExecuteNonQuery();
+
+        conn.Close();
+    }
+
+    // Método responsável por listar os administradores (sem a senha)
+    public List<Admin> ListarAdministradores()
+    {
+        List<Admin> administradores = new List<Admin>();
+
+        SqlConnection conn = AbrirConexao();
+
+        string sql = "SELECT * FROM ADMIN ORDER BY DSC_NOME";
+
+        SqlCommand cmd = new SqlCommand(sql, conn);
+
+        SqlDataReader reader = cmd.ExecuteReader();
+
+        while (reader.Read())
+        {
+            Admin admin = new Admin();
+
+            admin.Nome = reader["DSC_NOME"].ToString();
+            admin.Email = reader["DSC_EMAIL"].ToString();
+
+            administradores.Add(admin);
+        }
+
+        conn.Close();
+
+        return administradores;
+    }
+
+    // Método responsável por listar os atendentes (sem a senha)
+    public List<Atendente> ListarAtendentes()
+    {
+        List<Atendente> atendentes = new List<Atendente>();
+
+        SqlConnection conn = AbrirConexao();
+
+        string sql = "SELECT * FROM ATENDENTE ORDER BY DSC_NOME";
+
+        SqlCommand cmd = new SqlCommand(sql, conn);
+
+        SqlDataReader reader = cmd.ExecuteReader();
+
+        while (reader.Read())
+        {
+            Atendente atendente = new Atendente();
+
+            atendente.Nome = reader["DSC_NOME"].ToString();
+            atendente.Email = reader["DSC_EMAIL"].ToString();
+
+            atendentes.Add(atendente);
+        }
+
+        conn.Close();
+
+        return atendentes;
+    }
+
+    // O banco exige um administrador e um atendente para vincular ao usuário
+    public bool ExisteAdminEAtendente()
+    {
+        SqlConnection conn = AbrirConexao();
+
+        SqlCommand cmd = new SqlCommand(
+            @"SELECT CASE
+                       WHEN EXISTS (SELECT 1 FROM ADMIN)
+                        AND EXISTS (SELECT 1 FROM ATENDENTE)
+                       THEN 1 ELSE 0
+                     END", conn);
+
+        int resultado = Convert.ToInt32(cmd.ExecuteScalar());
+
+        conn.Close();
+
+        return resultado == 1;
+    }
+
+    // Cria o administrador padrão (admin@conecta.com / 1234) só se ainda
+    // não existir nenhum administrador no banco - igual ao front-end
+    public void GarantirAdminPadrao()
+    {
+        SqlConnection conn = AbrirConexao();
+
+        SqlCommand cmd = new SqlCommand("SELECT COUNT(*) FROM ADMIN", conn);
+
+        int total = Convert.ToInt32(cmd.ExecuteScalar());
+
+        conn.Close();
+
+        if (total == 0)
+        {
+            InserirAdmin("Administrador", "admin@conecta.com", "1234");
+        }
+    }
+
+    // Método responsável por atualizar o nome do administrador
+    public void AtualizarNomeAdministrador(string email, string novoNome)
+    {
+        SqlConnection conn = AbrirConexao();
+
+        string sql = @"UPDATE ADMIN
+                       SET DSC_NOME = @nome
+                       WHERE DSC_EMAIL = @email";
+
+        SqlCommand cmd = new SqlCommand(sql, conn);
+
+        cmd.Parameters.AddWithValue("@nome", novoNome);
+        cmd.Parameters.AddWithValue("@email", email);
+
+        cmd.ExecuteNonQuery();
+
+        conn.Close();
+    }
+
+    // Método responsável por atualizar o celular do administrador
+    // (precisa da coluna NUM_TELEFONE da tabela ADMIN - criada pelo banco_completo.sql)
+    public void AtualizarTelefoneAdministrador(string email, string telefone)
+    {
+        SqlConnection conn = AbrirConexao();
+
+        string sql = @"UPDATE ADMIN
+                       SET NUM_TELEFONE = @telefone
+                       WHERE DSC_EMAIL = @email";
+
+        SqlCommand cmd = new SqlCommand(sql, conn);
+
+        cmd.Parameters.AddWithValue("@telefone", telefone);
+        cmd.Parameters.AddWithValue("@email", email);
 
         cmd.ExecuteNonQuery();
 

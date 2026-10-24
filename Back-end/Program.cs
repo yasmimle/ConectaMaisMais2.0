@@ -12,35 +12,24 @@ app.UseSwagger();
 app.UseSwaggerUI();
 app.UseCors("front");
 
-// Login do app (CPF). O app manda só números e espera "token" e "id" na resposta.
-app.MapPost("/auth/login-cpf", (Banco banco, Dictionary<string, string> corpo) =>
-{
-    var cpf = new string((corpo["cpf"] ?? "").Where(char.IsDigit).ToArray());
-    var usuario = banco.BuscarUsuarioPorCpf(cpf);
-
-    if (usuario == null)
-        return Results.Unauthorized();
-
-    return Results.Ok(new { token = "token-teste", id = usuario.IdUsuario });
-});
-
-// Lista de usuários (para testar a ligação com o banco)
+// Lista de usuÃ¡rios (para testar a ligaÃ§Ã£o com o banco)
 app.MapGet("/usuarios", (Banco banco) => banco.ListarUsuarios());
 
-// Cadastro de usuário (idoso) vindo do site
+// Cadastro de usuÃ¡rio (idoso) vindo do site
 app.MapPost("/usuarios", (Banco banco, NovoUsuario dados) =>
 {
     var cpf = new string((dados.Cpf ?? "").Where(char.IsDigit).ToArray());
 
-    if (banco.CpfExiste(cpf))
-        return Results.Conflict(new { erro = "CPF já cadastrado." });
+    // O mesmo CPF nÃ£o pode existir em USUARIO e em AJUDANTE
+    if (banco.CpfExiste(cpf) || AgendamentosApi.CpfEmAjudante(banco, cpf))
+        return Results.Conflict(new { erro = "CPF jÃ¡ cadastrado." });
 
-    // Ordem das siglas no banco (ID_UF = posição + 1)
+    // Ordem das siglas no banco (ID_UF = posiÃ§Ã£o + 1)
     string[] ufs = { "AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG",
                      "PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO" };
     int idUf = Array.IndexOf(ufs, (dados.Estado ?? "").ToUpper()) + 1;
     if (idUf == 0)
-        return Results.BadRequest(new { erro = "Estado inválido." });
+        return Results.BadRequest(new { erro = "Estado invÃ¡lido." });
 
     var usuario = new Usuario
     {
@@ -57,7 +46,8 @@ app.MapPost("/usuarios", (Banco banco, NovoUsuario dados) =>
     banco.InserirUsuario(usuario);
     return Results.Ok(new { id = usuario.IdUsuario });
 });
-// Cria o admin padrão (admin@conecta.com / 1234) se ainda não existir nenhum
+
+// Cria o admin padrÃ£o (admin@conecta.com / 1234) se ainda nÃ£o existir nenhum
 try { app.Services.GetRequiredService<Banco>().GarantirAdminPadrao(); } catch { }
 
 // Login do painel (admin ou atendente)
@@ -80,14 +70,20 @@ app.MapPost("/auth/login-admin", (Banco banco, LoginDados dados) =>
 
     return Results.Unauthorized();
 });
-// Remover usuário (e os interesses dele)
+
+// Remover usuÃ¡rio (e os interesses dele)
 app.MapDelete("/usuarios/{id}", (Banco banco, int id) =>
 {
     banco.RemoverUsuario(id);
     return Results.Ok();
 });
 
+// Rotas do app: login por CPF, agendamentos, ajudantes e contato da ONG (arquivo Agendamentos.cs)
+app.MapAgendamentos();
+
 app.Run();
+
 record NovoUsuario(string Nome, string Email, string Telefone, string Cpf,
                    string Endereco, string Cidade, string Estado, string DataNascimento);
+
 record LoginDados(string Email, string Senha);
