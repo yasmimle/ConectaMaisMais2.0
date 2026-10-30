@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>ONG - Conecta++</title>
+
+    <link rel="stylesheet" href="../css/style.css">
+
+    <!-- VLibras -->
+    <script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
+
+</head>
+
+<body>
+
+    <!-- ===== HEADER ===== -->
+
+    <header id="topo">
+
+        <div class="header-container">
+
+            <a href="#topo" class="logo-link">
+                <img src="../Imagens/logo.png" alt="Conecta++" class="logo-img">
+            </a>
+
+            <nav class="menu">
+
+                <a href="#topo">Página Inicial</a>
+
+                <a href="#" onclick="showHistoria()">Nossa História</a>
+
+                <a href="#" onclick="showSaude()">
+                    Lembretes de Saúde
+                </a>
+
+                <a href="#" onclick="showGolpes()">
+                    Prevenção de Golpes
+                </a>
+
+                <a href="https://wa.me/11915160209" target="_blank">
+                    Whatsapp
+                </a>
+
+
+
+                <!-- LOGIN ADMIN -->
+
+                <div class="admin-area">
+
+                    <button class="btn-admin" onclick="abrirLogin()">
+                        Login Administrativo
+                    </button>
+
+                    <div class="login-box" id="loginBox">
+                        <h3>Administrador</h3>
+
+                        <input type="text" id="loginAdmin" placeholder="Digite seu email">
+                        <input type="password" id="senhaAdmin" placeholder="Digite sua senha">
+
+                        <button onclick="entrarAdmin()">Entrar</button>
+
+                        <p class="esqueci" onclick="abrirRecuperacao()">Esqueci minha senha</p>
+                    </div>
+                    <div id="areaRecuperacao" style="display:none;">
+                        <br>
+                        <input type="email" placeholder="Digite o email para recuperação">
+                        <button onclick="mostrarMensagemRecuperacao()">
+                            Enviar Recuperação
+                        </button>
+                        <p id="mensagemRecuperacao" style="margin-top:15px;font-size:14px;display:none;color:green;">
+                            Um link de recuperação será enviado para o e-mail cadastrado.
+                        </p>
+                    </div>
+
+                </div>
+
+            </nav>
+
+        </div>
+
+    </header>
+
+    <!-- ===== HERO ===== -->
+
+    <section class="hero">
+
+        <div class="hero-imagem">
+
+            <img src="../Imagens/hero-banner.jpeg" alt="Doação de roupas e brinquedos - Conecta++">
+
+            <div class="hero-conteudo">
+
+                <h1>Cada doação transforma uma vida</h1>
+
+                <p>
+                    Roupas, brinquedos e itens essenciais chegam a quem mais precisa.
+                    Faça parte dessa corrente de solidariedade.
+                </p>
+
+                <div class="botoes-home">
+
+                    <a href="cadastro.html" class="btn-principal">Clique para doar</a>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+    <!-- ===== INFO RÁPIDA ===== -->
+
+    <section class="info-rapida">
+
+        <div class="info-rapida-container">
+
+            <div class="info-card">
+                <span class="info-icon">🔒</span>
+                <p>
+                    Ao clicar em <strong>"Clique para doar"</strong>, você será direcionado
+                    para um cadastro seguro.
+                </p>
+            </div>
+
+            <div class="info-card">
+                <span class="info-icon">💬</span>
+                <p>
+                    Precisa de ajuda? Clique em <strong>"Whatsapp"</strong> no menu
+                    e envie uma mensagem — nossa equipe vai te auxiliar.
+                </p>
+            </div>
+
+            <div class="info-card">
+                <span class="info-icon">📱</span>
+                <p>
+                    Baixe nosso aplicativo <strong>"Conecta++"</strong> para facilitar
+                    consultas, agendamentos e trazer mais autonomia no dia a dia.
+                </p>
+            </div>
+
+        </div>
+
+    </section>
+
+    <!-- ===== VLibras ===== -->
+
+    <div vw class="enabled">
+
+        <div vw-access-button class="active"></div>
+
+        <div vw-plugin-wrapper>
+            <div class="vw-plugin-top-wrapper"></div>
+        </div>
+
+    </div>
+
+    <!-- ===== SCRIPT ===== -->
+
+    <script>
+                    new window.VLibras.Widget('https://vlibras.gov.br/app');
+
+                        function abrirLogin() {
+
+                            const box = document.getElementById("loginBox");
+
+                            if (box.style.display === "block") {
+                                box.style.display = "none";
+                            } else {
+                                box.style.display = "block";
+                            }
+
+                        }
+
+                        function abrirRecuperacao() {
+
+                            document.getElementById(
+                                "areaRecuperacao"
+                            ).style.display = "block";
+
+                        }
+
+                        function mostrarMensagemRecuperacao() {
+
+                            document.getElementById(
+                                "mensagemRecuperacao"
+                            ).style.display = "block";
+
+                        }
+
+
+                        function showSaude() {
+
+                            document.getElementById('popup').classList.remove('hidden');
+
+                            document.getElementById('popupTitle').innerText =
+                                "Lembretes de Saúde";
+
+                            document.getElementById('popupText').innerHTML =
+
+                                "• Tome os medicamentos corretamente<br><br>" +
+
+                                "• Beba bastante água<br><br>" +
+
+                                "• Faça exames regularmente<br><br>" +
+
+                                "• Mantenha alimentação saudável";
+                        }
+
+                        function showGolpes() {
+
+                            document.getElementById('popup').classList.remove('hidden');
+
+                            document.getElementById('popupTitle').innerText =
+                                "Prevenção de Golpes";
+
+                            document.getElementById('popupText').innerHTML =
+
+                                "• Nunca compartilhe senhas<br><br>" +
+
+                                "• Desconfie de ligações bancárias<br><br>" +
+
+                                "• Não clique em links desconhecidos<br><br>" +
+
+                                "• Confirme informações com familiares";
+                        }
+
+                        function closePopup() {
+
+                            document.getElementById('popup')
+                                .classList.add('hidden');
+                        }
+
+                        function showHistoria() {
+                            document.getElementById('historiaModal').classList.remove('hidden');
+                        }
+
+                        function closeHistoria() {
+                            document.getElementById('historiaModal').classList.add('hidden');
+                        }</script>
+
+    <div id="popup" class="popup hidden">
+
+        <div class="popup-content">
+
+            <span class="close-btn" onclick="closePopup()">
+                ×
+            </span>
+
+            <h2 id="popupTitle"></h2>
+
+            <p id="popupText"></p>
+
+        </div>
+
+    </div>
+
+    <!-- ===== NOSSA HISTÓRIA (popup) ===== -->
+
+    <div id="historiaModal" class="popup hidden">
+
+        <div class="popup-content historia-popup-content">
+
+            <span class="close-btn" onclick="closeHistoria()">×</span>
+
+            <h2 class="historia-titulo">Nossa História</h2>
+
+            <div class="historia-conteudo">
+
+                <div class="historia-imagem">
+                    <img src="../Imagens/foto-historia.png" alt="Nossa História">
+                </div>
+
+                <div class="historia-texto">
+
+                    <p>
+                        A ONG CONECTA++ nasceu em 2018 com o objetivo de levar solidariedade e esperança
+                        para idosos e famílias em situação de vulnerabilidade. A iniciativa surgiu através
+                        de voluntários que perceberam a dificuldade de muitas pessoas em conseguir itens
+                        básicos do dia a dia.
+                    </p>
+
+                    <p>
+                        Com o crescimento do projeto, foi criado um site acessível e fácil de usar,
+                        especialmente pensado para idosos, facilitando doações de roupas, móveis, brinquedos
+                        e outros itens de forma rápida e segura.
+                    </p>
+
+                    <p>
+                        A plataforma também disponibiliza conteúdos sobre saúde, bem-estar e prevenção de
+                        golpes e fraudes, ajudando idosos a utilizarem a internet de forma mais segura.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="acessibilidade">
+        <button type="button" onclick="alterarZoom(0.1)">A+</button>
+        <button type="button" onclick="alterarZoom(-0.1)">A-</button>
+    </div>
+
+    <script>
+                    let zoomAtual = 1;
+
+                        function alterarZoom(delta) {
+                            zoomAtual = zoomAtual + delta;
+
+                            if (zoomAtual > 1.5) zoomAtual = 1.5;
+                            if (zoomAtual < 0.8) zoomAtual = 0.8;
+
+                            document.documentElement.style.zoom = zoomAtual;
+                        }</script>
+    <script>
+                        function entrarAdmin() {
+                            const usuario = document.getElementById("loginAdmin").value.trim().toLowerCase();
+                            const senha = document.getElementById("senhaAdmin").value.trim();
+
+                            /* administradores criados pelo painel */
+                            const administradores =
+                                JSON.parse(localStorage.getItem("administradores")) || [];
+
+                            const adminEncontrado = administradores.find(
+                                a => (a.email || "").trim().toLowerCase() === usuario
+                                    && a.senha === senha
+                            );
+
+                            if (adminEncontrado) {
+                                localStorage.setItem("tipoUsuario", "administrador");
+                                localStorage.setItem("adminEmail", adminEncontrado.email);
+                                localStorage.setItem("adminNome", adminEncontrado.nome);
+                                localStorage.removeItem("atendenteEmail");
+                                localStorage.removeItem("atendenteNome");
+                                window.location.href = "admin.html";
+                                return;
+                            }
+
+                            /* atendentes criados pelo painel */
+                            const atendentes =
+                                JSON.parse(localStorage.getItem("atendentes")) || [];
+
+                            const atendenteEncontrado = atendentes.find(
+                                a => (a.email || "").trim().toLowerCase() === usuario
+                                    && a.senha === senha
+                            );
+
+                            if (atendenteEncontrado) {
+                                localStorage.setItem("tipoUsuario", "atendente");
+                                localStorage.setItem("adminEmail", atendenteEncontrado.email);
+                                localStorage.setItem("adminNome", atendenteEncontrado.nome);
+                                localStorage.setItem("atendenteEmail", atendenteEncontrado.email);
+                                localStorage.setItem("atendenteNome", atendenteEncontrado.nome);
+                                window.location.href = "atendente.html";
+                                return;
+                            }
+
+                            alert("Login ou senha incorretos!");
+                        }
+
+                        /* Enter confirma o login (admin ou usuário) */
+                        document.getElementById("senhaAdmin").addEventListener("keydown", function (evento) {
+                            if (evento.key === "Enter") {
+                                evento.preventDefault();
+                                entrarAdmin();
+                            }
+                        });
+
+                        /* clicar fora da caixa de login fecha ela */
+                        document.addEventListener("click", function (evento) {
+
+                            const boxAdmin = document.getElementById("loginBox");
+                            const botaoAdmin = document.querySelector(".btn-admin");
+
+                            if (boxAdmin && boxAdmin.style.display === "block") {
+                                if (!boxAdmin.contains(evento.target) && evento.target !== botaoAdmin) {
+                                    boxAdmin.style.display = "none";
+                                }
+                            }
+                        });</script>
+
+    <script>
+                /* cria o administrador inicial só na primeira vez
+                   (nunca sobrescreve se você já tiver uma lista salva) */
+                if (!localStorage.getItem("administradores")) {
+                    localStorage.setItem("administradores", JSON.stringify([
+                        { nome: "Administrador", email: "admin@conecta.com", senha: "1234" }
+                    ]));
+                }
+    </script>
+</body>
+
+</html>
