@@ -1,0 +1,232 @@
+/* =====================================================================
+   CONECTA++ — AJUSTES DO BANCO PARA O APP MOBILE
+   Adaptado ao banco existente dbSistemaDoacao
+
+   
+   ===================================================================== */
+
+USE dbSistemaDoacao;
+GO
+
+
+DECLARE @APAGAR_WEB BIT = 0;
+
+IF @APAGAR_WEB = 1
+BEGIN
+    SET XACT_ABORT ON;
+    BEGIN TRY
+        BEGIN TRANSACTION;
+
+        -- Relatório do que será removido
+        SELECT T.name AS TABELA_WEB,
+               SUM(P.rows) AS QUANTIDADE_LINHAS
+        FROM sys.tables T
+        JOIN sys.partitions P ON P.object_id = T.object_id AND P.index_id IN (0,1)
+        WHERE T.name IN ('NECESSIDADE','LEMBRETE','CONTEUDO','NOTIFICACAO',
+                         'PREFERENCIA_ACESSIBILIDADE','SUPORTE_EXTERNO')
+        GROUP BY T.name;
+
+        -- Triggers e procedures exclusivos da web/app antigo
+        IF OBJECT_ID('dbo.TR_NECESSIDADE_ATUALIZACAO','TR') IS NOT NULL
+            DROP TRIGGER dbo.TR_NECESSIDADE_ATUALIZACAO;
+        IF OBJECT_ID('dbo.TR_AGENDAMENTO_NOTIFICACAO','TR') IS NOT NULL
+            DROP TRIGGER dbo.TR_AGENDAMENTO_NOTIFICACAO;
+        IF OBJECT_ID('dbo.TR_LEMBRETE_NOTIFICACAO','TR') IS NOT NULL
+            DROP TRIGGER dbo.TR_LEMBRETE_NOTIFICACAO;
+        IF OBJECT_ID('dbo.sp_CadastrarNecessidade','P') IS NOT NULL
+            DROP PROCEDURE dbo.sp_CadastrarNecessidade;
+        IF OBJECT_ID('dbo.sp_ConsultarNecessidadesUsuario','P') IS NOT NULL
+            DROP PROCEDURE dbo.sp_ConsultarNecessidadesUsuario;
+
+        -- Remover dependências primeiro
+        IF OBJECT_ID('dbo.NOTIFICACAO','U') IS NOT NULL DROP TABLE dbo.NOTIFICACAO;
+        IF OBJECT_ID('dbo.LEMBRETE','U') IS NOT NULL DROP TABLE dbo.LEMBRETE;
+        IF OBJECT_ID('dbo.PREFERENCIA_ACESSIBILIDADE','U') IS NOT NULL DROP TABLE dbo.PREFERENCIA_ACESSIBILIDADE;
+        IF OBJECT_ID('dbo.CONTEUDO','U') IS NOT NULL DROP TABLE dbo.CONTEUDO;
+        IF OBJECT_ID('dbo.SUPORTE_EXTERNO','U') IS NOT NULL DROP TABLE dbo.SUPORTE_EXTERNO;
+        IF OBJECT_ID('dbo.NECESSIDADE','U') IS NOT NULL DROP TABLE dbo.NECESSIDADE;
+
+        COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        IF XACT_STATE() <> 0 ROLLBACK TRANSACTION;
+        THROW;
+    END CATCH;
+END;
+GO
+
+/* PRÉ-REQUISITOS */
+IF OBJECT_ID('dbo.USUARIO','U') IS NULL
+    THROW 52000, 'A tabela dbo.USUARIO não existe neste banco.', 1;
+IF OBJECT_ID('dbo.AGENDAMENTO','U') IS NULL
+    THROW 52001, 'A tabela dbo.AGENDAMENTO não existe neste banco.', 1;
+IF OBJECT_ID('dbo.AJUDANTE','U') IS NULL
+    THROW 52002, 'A tabela dbo.AJUDANTE não existe neste banco.', 1;
+IF OBJECT_ID('dbo.DISPONIBILIDADE_AJUDANTE','U') IS NULL
+    THROW 52003, 'A tabela dbo.DISPONIBILIDADE_AJUDANTE não existe neste banco.', 1;
+IF OBJECT_ID('dbo.PERFIL_ACESSO','U') IS NULL
+    THROW 52004, 'A tabela dbo.PERFIL_ACESSO não existe neste banco.', 1;
+IF OBJECT_ID('dbo.HISTORICO_AGENDAMENTO','U') IS NULL
+    THROW 52005, 'A tabela dbo.HISTORICO_AGENDAMENTO não existe neste banco.', 1;
+GO
+
+/* AJUSTE 1 — Origem e destino do agendamento */
+IF COL_LENGTH('dbo.AGENDAMENTO','DSC_LOCAL') IS NOT NULL
+    ALTER TABLE dbo.AGENDAMENTO ALTER COLUMN DSC_LOCAL VARCHAR(250) NULL;
+IF COL_LENGTH('dbo.AGENDAMENTO','DSC_ORIGEM') IS NULL
+    ALTER TABLE dbo.AGENDAMENTO ADD DSC_ORIGEM VARCHAR(250) NULL;
+GO
+
+/* AJUSTE 2 — Duração prevista em minutos */
+IF COL_LENGTH('dbo.AGENDAMENTO','DURACAO_MIN') IS NULL
+    ALTER TABLE dbo.AGENDAMENTO ADD DURACAO_MIN INT NULL;
+IF NOT EXISTS (SELECT 1 FROM sys.check_constraints WHERE name='CK_AGENDAMENTO_DURACAO' AND parent_object_id=OBJECT_ID('dbo.AGENDAMENTO'))
+    ALTER TABLE dbo.AGENDAMENTO ADD CONSTRAINT CK_AGENDAMENTO_DURACAO CHECK (DURACAO_MIN IS NULL OR DURACAO_MIN > 0);
+GO
+
+/* AJUSTE 3 — CPF obrigatório e único para ajudantes */
+IF EXISTS (SELECT 1 FROM dbo.AJUDANTE WHERE CPF IS NULL OR LTRIM(RTRIM(CPF))='')
+    THROW 52010, 'Há ajudantes sem CPF. Preencha antes de continuar.', 1;
+IF EXISTS (SELECT LTRIM(RTRIM(CPF)) FROM dbo.AJUDANTE GROUP BY LTRIM(RTRIM(CPF)) HAVING COUNT(*)>1)
+    THROW 52011, 'Há CPFs duplicados em AJUDANTE. Corrija antes de continuar.', 1;
+IF EXISTS (SELECT 1 FROM dbo.AJUDANTE WHERE LEN(LTRIM(RTRIM(CPF)))<>11 OR LTRIM(RTRIM(CPF)) LIKE '%[^0-9]%')
+    THROW 52012, 'Há CPF de ajudante que não contém exatamente 11 dígitos. Corrija antes de continuar.', 1;
+ALTER TABLE dbo.AJUDANTE ALTER COLUMN CPF VARCHAR(11) NOT NULL;
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name='UX_AJUDANTE_CPF' AND object_id=OBJECT_ID('dbo.AJUDANTE'))
+    CREATE UNIQUE INDEX UX_AJUDANTE_CPF ON dbo.AJUDANTE(CPF);
+GO
+
+/* AJUSTE 4 — Perfil Ajudante e vínculo com AJUDANTE */
+IF NOT EXISTS (SELECT 1 FROM dbo.PERFIL_ACESSO WHERE DSC_PERFIL='Ajudante')
+    INSERT INTO dbo.PERFIL_ACESSO (DSC_PERFIL, DSC_PERMISSOES)
+    VALUES ('Ajudante','Consultar a própria agenda, gerenciar a própria disponibilidade e concluir ou cancelar atendimentos');
+IF COL_LENGTH('dbo.AJUDANTE','ID_PERFIL') IS NULL
+    ALTER TABLE dbo.AJUDANTE ADD ID_PERFIL INT NULL;
+IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name='FK_AJUDANTE_PERFIL' AND parent_object_id=OBJECT_ID('dbo.AJUDANTE'))
+    ALTER TABLE dbo.AJUDANTE ADD CONSTRAINT FK_AJUDANTE_PERFIL FOREIGN KEY (ID_PERFIL) REFERENCES dbo.PERFIL_ACESSO(ID_PERFIL);
+UPDATE A SET ID_PERFIL=P.ID_PERFIL
+FROM dbo.AJUDANTE A CROSS JOIN dbo.PERFIL_ACESSO P
+WHERE P.DSC_PERFIL='Ajudante' AND A.ID_PERFIL IS NULL;
+GO
+
+/* AJUSTE 5 — Perfil do idoso/usuário.
+   A tabela do projeto usa NUM_CPF (não CPF). O endereço não existia na estrutura
+   consultada, então é acrescentado com nome DSC_ENDERECO, sem apagar colunas. */
+IF COL_LENGTH('dbo.USUARIO','DSC_ENDERECO') IS NULL
+    ALTER TABLE dbo.USUARIO ADD DSC_ENDERECO VARCHAR(250) NULL;
+IF COL_LENGTH('dbo.USUARIO','ID_PERFIL') IS NULL
+    ALTER TABLE dbo.USUARIO ADD ID_PERFIL INT NULL;
+IF NOT EXISTS (SELECT 1 FROM dbo.PERFIL_ACESSO WHERE DSC_PERFIL='Usuário')
+    INSERT INTO dbo.PERFIL_ACESSO (DSC_PERFIL, DSC_PERMISSOES)
+    VALUES ('Usuário','Consultar e gerenciar os próprios dados e agendamentos');
+IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name='FK_USUARIO_PERFIL' AND parent_object_id=OBJECT_ID('dbo.USUARIO'))
+    ALTER TABLE dbo.USUARIO ADD CONSTRAINT FK_USUARIO_PERFIL FOREIGN KEY (ID_PERFIL) REFERENCES dbo.PERFIL_ACESSO(ID_PERFIL);
+UPDATE U SET ID_PERFIL=P.ID_PERFIL
+FROM dbo.USUARIO U CROSS JOIN dbo.PERFIL_ACESSO P
+WHERE P.DSC_PERFIL='Usuário' AND U.ID_PERFIL IS NULL;
+
+-- Garantir unicidade do CPF da tabela USUARIO, cujo nome real é NUM_CPF.
+IF EXISTS (SELECT LTRIM(RTRIM(NUM_CPF)) FROM dbo.USUARIO GROUP BY LTRIM(RTRIM(NUM_CPF)) HAVING COUNT(*)>1)
+    THROW 52013, 'Há NUM_CPF duplicados em USUARIO. Corrija antes de criar índice único.', 1;
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name='UX_USUARIO_NUM_CPF' AND object_id=OBJECT_ID('dbo.USUARIO'))
+    CREATE UNIQUE INDEX UX_USUARIO_NUM_CPF ON dbo.USUARIO(NUM_CPF);
+GO
+
+/* AJUSTE 6 — Horário permitido: 07:00 a 20:00 */
+IF EXISTS (SELECT 1 FROM dbo.AGENDAMENTO WHERE HORA_AGENDAMENTO<'07:00' OR HORA_AGENDAMENTO>'20:00')
+    THROW 52020, 'Há agendamentos fora de 07:00 a 20:00. Corrija antes de continuar.', 1;
+IF EXISTS (SELECT 1 FROM dbo.DISPONIBILIDADE_AJUDANTE WHERE HORA_INICIO<'07:00' OR HORA_FIM>'20:00')
+    THROW 52021, 'Há disponibilidades fora de 07:00 a 20:00. Corrija antes de continuar.', 1;
+IF NOT EXISTS (SELECT 1 FROM sys.check_constraints WHERE name='CK_AGENDAMENTO_HORARIO' AND parent_object_id=OBJECT_ID('dbo.AGENDAMENTO'))
+    ALTER TABLE dbo.AGENDAMENTO ADD CONSTRAINT CK_AGENDAMENTO_HORARIO CHECK (HORA_AGENDAMENTO BETWEEN '07:00' AND '20:00');
+IF NOT EXISTS (SELECT 1 FROM sys.check_constraints WHERE name='CK_DISP_HORARIO_ATENDIMENTO' AND parent_object_id=OBJECT_ID('dbo.DISPONIBILIDADE_AJUDANTE'))
+    ALTER TABLE dbo.DISPONIBILIDADE_AJUDANTE ADD CONSTRAINT CK_DISP_HORARIO_ATENDIMENTO CHECK (HORA_INICIO >= '07:00' AND HORA_FIM <= '20:00');
+GO
+
+/* AJUSTE 7 — Distância máxima de 12 km */
+IF EXISTS (SELECT 1 FROM dbo.AGENDAMENTO WHERE DISTANCIA_KM>12)
+    THROW 52030, 'Há agendamentos com distância superior a 12 km. Corrija antes de continuar.', 1;
+IF NOT EXISTS (SELECT 1 FROM sys.check_constraints WHERE name='CK_AGENDAMENTO_DISTANCIA_MAX' AND parent_object_id=OBJECT_ID('dbo.AGENDAMENTO'))
+    ALTER TABLE dbo.AGENDAMENTO ADD CONSTRAINT CK_AGENDAMENTO_DISTANCIA_MAX CHECK (DISTANCIA_KM IS NULL OR DISTANCIA_KM <= 12);
+GO
+
+/* AJUSTE 8 — Procedure atualizada; parâmetros novos são opcionais para manter
+   compatibilidade com chamadas antigas. A API calcula distância/duração e escolhe ajudante. */
+CREATE OR ALTER PROCEDURE dbo.sp_CriarAgendamento
+    @ID_USUARIO INT,
+    @DATA_AGENDAMENTO DATE,
+    @HORA_AGENDAMENTO TIME(0),
+    @DSC_TIPO VARCHAR(100),
+    @DSC_LOCAL VARCHAR(250)=NULL,
+    @DSC_OBSERVACAO VARCHAR(500)=NULL,
+    @DSC_ORIGEM VARCHAR(250)=NULL,
+    @DURACAO_MIN INT=NULL,
+    @ID_AJUDANTE INT=NULL,
+    @DISTANCIA_KM DECIMAL(8,2)=NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF NOT EXISTS (SELECT 1 FROM dbo.USUARIO WHERE ID_USUARIO=@ID_USUARIO)
+        THROW 52040, 'Usuário não encontrado.', 1;
+    IF @ID_AJUDANTE IS NOT NULL AND NOT EXISTS (SELECT 1 FROM dbo.AJUDANTE WHERE ID_AJUDANTE=@ID_AJUDANTE AND FLG_ATIVO=1)
+        THROW 52041, 'Ajudante não encontrado ou inativo.', 1;
+    IF @DURACAO_MIN IS NOT NULL AND @DURACAO_MIN<=0
+        THROW 52042, 'A duração deve ser maior que zero.', 1;
+    IF @DISTANCIA_KM IS NOT NULL AND @DISTANCIA_KM>12
+        THROW 52043, 'A distância máxima permitida é 12 km.', 1;
+    IF @HORA_AGENDAMENTO<'07:00' OR @HORA_AGENDAMENTO>'20:00'
+        THROW 52044, 'O horário permitido é das 07:00 às 20:00.', 1;
+
+    INSERT INTO dbo.AGENDAMENTO
+        (ID_USUARIO, ID_AJUDANTE, DATA_AGENDAMENTO, HORA_AGENDAMENTO,
+         DSC_TIPO, DSC_ORIGEM, DSC_LOCAL, DSC_OBSERVACAO, DURACAO_MIN, DISTANCIA_KM)
+    VALUES
+        (@ID_USUARIO, @ID_AJUDANTE, @DATA_AGENDAMENTO, @HORA_AGENDAMENTO,
+         @DSC_TIPO, @DSC_ORIGEM, @DSC_LOCAL, @DSC_OBSERVACAO, @DURACAO_MIN, @DISTANCIA_KM);
+
+    SELECT CAST(SCOPE_IDENTITY() AS INT) AS ID_AGENDAMENTO;
+END;
+GO
+
+/* AJUSTE 9 — Histórico automático de mudança de status */
+CREATE OR ALTER TRIGGER dbo.TR_AGENDAMENTO_HISTORICO
+ON dbo.AGENDAMENTO
+AFTER UPDATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+    IF NOT UPDATE(DSC_STATUS) RETURN;
+
+    INSERT INTO dbo.HISTORICO_AGENDAMENTO
+        (ID_AGENDAMENTO, DSC_STATUS_ANTERIOR, DSC_STATUS_NOVO)
+    SELECT I.ID_AGENDAMENTO, D.DSC_STATUS, I.DSC_STATUS
+    FROM inserted I
+    INNER JOIN deleted D ON D.ID_AGENDAMENTO=I.ID_AGENDAMENTO
+    WHERE ISNULL(D.DSC_STATUS,'')<>ISNULL(I.DSC_STATUS,'');
+END;
+GO
+
+/* VERIFICAÇÃO FINAL — apenas leitura */
+SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE, IS_NULLABLE
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME IN ('USUARIO','AGENDAMENTO','AJUDANTE','DISPONIBILIDADE_AJUDANTE','PERFIL_ACESSO','HISTORICO_AGENDAMENTO')
+ORDER BY TABLE_NAME, ORDINAL_POSITION;
+GO
+
+SELECT name AS OBJETO, type_desc AS TIPO
+FROM sys.objects
+WHERE name IN ('sp_CriarAgendamento','TR_AGENDAMENTO_HISTORICO','TR_AGENDAMENTO_NOTIFICACAO','TR_LEMBRETE_NOTIFICACAO','TR_NECESSIDADE_ATUALIZACAO')
+ORDER BY name;
+GO
+
+/* O QUE A API/APP AINDA PRECISA FAZER (não é resolvido apenas pelo SQL):
+   - duração por tipo: Hospital=180, Mercado=120, Farmácia=90 minutos;
+   - selecionar ajudante livre considerando duração e conflito de horários;
+   - calcular distância entre DSC_ORIGEM e DSC_LOCAL e recusar >12 km;
+   - login por CPF, validar dígitos e impedir CPF igual em USUARIO.NUM_CPF e AJUDANTE.CPF;
+   - preencher DATA_CANCELAMENTO ao cancelar (a coluna já existe no banco original);
+   - usar telefone da ONG 11919100860 no app/API;
+   - no app, usar status Agendado, Concluído e Cancelado e enviar origem/destino;
+   - conferir se o nome DSC_ENDERECO atende ao contrato esperado pela API/app.
+*/
