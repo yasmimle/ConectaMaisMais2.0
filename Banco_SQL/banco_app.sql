@@ -220,13 +220,3 @@ WHERE name IN ('sp_CriarAgendamento','TR_AGENDAMENTO_HISTORICO','TR_AGENDAMENTO_
 ORDER BY name;
 GO
 
-/* O QUE A API/APP AINDA PRECISA FAZER (não é resolvido apenas pelo SQL):
-   - duração por tipo: Hospital=180, Mercado=120, Farmácia=90 minutos;
-   - selecionar ajudante livre considerando duração e conflito de horários;
-   - calcular distância entre DSC_ORIGEM e DSC_LOCAL e recusar >12 km;
-   - login por CPF, validar dígitos e impedir CPF igual em USUARIO.NUM_CPF e AJUDANTE.CPF;
-   - preencher DATA_CANCELAMENTO ao cancelar (a coluna já existe no banco original);
-   - usar telefone da ONG 11919100860 no app/API;
-   - no app, usar status Agendado, Concluído e Cancelado e enviar origem/destino;
-   - conferir se o nome DSC_ENDERECO atende ao contrato esperado pela API/app.
-*/
