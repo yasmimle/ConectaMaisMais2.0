@@ -35,8 +35,10 @@ import com.conecta.mobile.ui.theme.LightBackground
 import com.conecta.mobile.ui.theme.StatusGreen
 import com.conecta.mobile.ui.theme.TextPrimary
 
-// Telefone da ONG (o mesmo número que está no site). Confira se é o número certo.
-val telefoneOng = "11915160209"
+// Telefone e WhatsApp da ONG. Começam com o número combinado e, com a API ligada,
+// são atualizados pelo que está no appsettings.json da API (rota /ong/contato).
+var telefoneOng = "11919100860"
+var whatsappOng = "11919100860"
 
 // TelaHome: tela principal, mostrada depois do login.
 @Composable
@@ -47,6 +49,24 @@ fun TelaHome(
 ) {
     val context = LocalContext.current
     var mostrarContato by remember { mutableStateOf(false) }
+
+    // Pede à API o telefone da ONG (se a API não responder, fica o número de cima).
+    LaunchedEffect(Unit) {
+        if (!usarApiFake) {
+            try {
+                val resposta = api.contatoOng()
+                val corpo = resposta.body()
+                if (resposta.isSuccessful && corpo != null) {
+                    val tel = corpo.get("telefone")?.asString
+                    val zap = corpo.get("whatsapp")?.asString
+                    if (!tel.isNullOrBlank()) telefoneOng = tel
+                    if (!zap.isNullOrBlank()) whatsappOng = zap
+                }
+            } catch (e: Exception) {
+                // sem conexão: continua com o número padrão
+            }
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -143,7 +163,7 @@ fun TelaHome(
 
                     Button(
                         onClick = {
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://wa.me/55$telefoneOng"))
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://wa.me/55$whatsappOng"))
                             context.startActivity(intent)
                             mostrarContato = false
                         },

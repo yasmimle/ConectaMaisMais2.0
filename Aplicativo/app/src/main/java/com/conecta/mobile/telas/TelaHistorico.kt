@@ -18,6 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.google.gson.JsonObject
 import com.conecta.mobile.ui.theme.CardBackground
 import com.conecta.mobile.ui.theme.ConectaMobileTheme
 import com.conecta.mobile.ui.theme.DarkGreenPrimary
@@ -31,15 +32,15 @@ import com.conecta.mobile.ui.theme.TextPrimary
 @Composable
 fun TelaHistorico(onBack: () -> Unit, onAgendamentoClick: () -> Unit) {
 
-    // Dados de exemplo (fake): status, data e descrição.
+    // Dados de exemplo (fake), usados só quando usarApiFake é true.
     val agendamentosFake = listOf(
-        Triple("Aceito", "20/09/2026", "Ida à farmácia"),
-        Triple("Concluído", "10/09/2026", "Consulta médica"),
-        Triple("Concluído", "05/09/2026", "Ida ao mercado"),
-        Triple("Cancelado", "01/09/2026", "Ida à farmácia")
+        agendamentoExemplo("Agendado", "20/09/2026", "Farmácia", "Farmácia Popular"),
+        agendamentoExemplo("Concluído", "10/09/2026", "Hospital", "Hospital São Lucas"),
+        agendamentoExemplo("Concluído", "05/09/2026", "Mercado", "Mercado Extra"),
+        agendamentoExemplo("Cancelado", "01/09/2026", "Farmácia", "Farmácia Popular")
     )
 
-    var lista by remember { mutableStateOf(if (usarApiFake) agendamentosFake else emptyList()) }
+    var lista by remember { mutableStateOf<List<JsonObject>>(if (usarApiFake) agendamentosFake else emptyList()) }
     var carregando by remember { mutableStateOf(!usarApiFake) }
     var erroCarga by remember { mutableStateOf("") }
 
@@ -53,16 +54,9 @@ fun TelaHistorico(onBack: () -> Unit, onAgendamentoClick: () -> Unit) {
                 val corpo = resposta.body()
 
                 if (resposta.isSuccessful && corpo != null) {
-                    val nova = mutableListOf<Triple<String, String, String>>()
+                    val nova = mutableListOf<JsonObject>()
                     for (item in corpo) {
-                        val obj = item.asJsonObject
-                        nova.add(
-                            Triple(
-                                obj.get("status")?.asString ?: "",
-                                obj.get("data")?.asString ?: "",
-                                obj.get("descricao")?.asString ?: ""
-                            )
-                        )
+                        nova.add(item.asJsonObject)
                     }
                     lista = nova
                 } else {
@@ -108,9 +102,9 @@ fun TelaHistorico(onBack: () -> Unit, onAgendamentoClick: () -> Unit) {
             LazyColumn {
                 items(lista) { agendamento ->
                     CardHistorico(
-                        status = agendamento.first,
-                        data = agendamento.second,
-                        descricao = agendamento.third,
+                        status = textoDe(agendamento, "status"),
+                        data = textoDe(agendamento, "data") + " às " + textoDe(agendamento, "hora"),
+                        descricao = textoDe(agendamento, "descricao"),
                         onClick = {
                             agendamentoAtual = agendamento
                             onAgendamentoClick()
@@ -123,9 +117,22 @@ fun TelaHistorico(onBack: () -> Unit, onAgendamentoClick: () -> Unit) {
     }
 }
 
+// Monta um agendamento de exemplo (só para o modo de teste).
+private fun agendamentoExemplo(status: String, data: String, tipo: String, destino: String): JsonObject {
+    val obj = JsonObject()
+    obj.addProperty("status", status)
+    obj.addProperty("data", data)
+    obj.addProperty("hora", "09:00")
+    obj.addProperty("tipo", tipo)
+    obj.addProperty("origem", "Rua das Flores, 123 - Osasco/SP")
+    obj.addProperty("destino", destino)
+    obj.addProperty("descricao", "$tipo - $destino")
+    return obj
+}
+
 @Composable
 fun CardHistorico(status: String, data: String, descricao: String, onClick: () -> Unit) {
-    // Verde = concluído, vermelho = cancelado, azul = pendente/aceito
+    // Verde = concluído, vermelho = cancelado, verde-escuro = agendado
     val corStatus = when (status) {
         "Concluído" -> StatusGreen
         "Cancelado" -> StatusRed

@@ -9,10 +9,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LocalHospital
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Place
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -30,31 +30,21 @@ import com.conecta.mobile.ui.theme.LightBackground
 import com.conecta.mobile.ui.theme.TextPrimary
 
 // TelaDetalhesAgendamento: mostra as informações do agendamento que foi tocado no Histórico.
+// Os dados vêm da API (guardados em agendamentoAtual quando a pessoa toca no card).
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TelaDetalhesAgendamento(onBack: () -> Unit) {
 
-    // Dados que vêm do card tocado (se estiver vazio, usa um exemplo, por causa do preview).
-    val status = if (agendamentoAtual.first.isEmpty()) "Aceito" else agendamentoAtual.first
-    val data = if (agendamentoAtual.second.isEmpty()) "15/09/2026" else agendamentoAtual.second
-    val tipoAjuda = if (agendamentoAtual.third.isEmpty()) "Consulta médica" else agendamentoAtual.third
+    val agendamento = agendamentoAtual
+    val status = textoDe(agendamento, "status").ifEmpty { "-" }
+    val data = textoDe(agendamento, "data").ifEmpty { "-" }
+    val hora = textoDe(agendamento, "hora").ifEmpty { "-" }
+    val tipoAjuda = textoDe(agendamento, "tipo").ifEmpty { "-" }
+    val casaIdoso = textoDe(agendamento, "origem").ifEmpty { "Não informado" }
+    val destino = textoDe(agendamento, "destino").ifEmpty { "Não informado" }
 
-    // Ainda de exemplo: a API vai mandar estes campos quando tiver o detalhe do agendamento.
-    val destino = when {
-        tipoAjuda.contains("médica", ignoreCase = true) -> "Hospital São Lucas"
-        tipoAjuda.contains("mercado", ignoreCase = true) -> "Mercado Extra"
-        else -> "Farmácia Popular"
-    }
-    val duracao = when {
-        tipoAjuda.contains("médica", ignoreCase = true) -> "3h00"
-        tipoAjuda.contains("mercado", ignoreCase = true) -> "2h00"
-        else -> "1h30"
-    }
-    val idoso = "José Pereira"
-    val ajudante = "Maria dos Santos"
-    val hora = "14:00"
-    val enderecoOng = "ONG Conecta++ - Rua A, 100"
-    val casaIdoso = "Rua das Flores, 123 - Osasco/SP"
+    // Mesmas durações da API: Hospital 3h, Mercado 2h, Farmácia 1h30.
+    val duracao = formatarDuracao(duracaoPorTipo(tipoAjuda))
 
     Column(
         modifier = Modifier
@@ -81,17 +71,13 @@ fun TelaDetalhesAgendamento(onBack: () -> Unit) {
                 elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
             ) {
                 Column(modifier = Modifier.padding(22.dp)) {
-                    LinhaDetalhe(Icons.Default.Person, "Idoso:", idoso)
-                    Divider(modifier = Modifier.padding(vertical = 14.dp), color = Color.LightGray.copy(alpha = 0.4f))
-                    LinhaDetalhe(Icons.Default.Person, "Ajudante:", ajudante)
-                    Divider(modifier = Modifier.padding(vertical = 14.dp), color = Color.LightGray.copy(alpha = 0.4f))
                     LinhaDetalhe(Icons.Default.DateRange, "Data:", "$data às $hora")
                     Divider(modifier = Modifier.padding(vertical = 14.dp), color = Color.LightGray.copy(alpha = 0.4f))
-                    LinhaDetalhe(Icons.Default.Place, "Duração prevista:", duracao)
+                    LinhaDetalhe(Icons.Default.Schedule, "Duração prevista:", duracao)
                     Divider(modifier = Modifier.padding(vertical = 14.dp), color = Color.LightGray.copy(alpha = 0.4f))
-                    LinhaDetalhe(Icons.Default.Phone, "Tipo de ajuda:", tipoAjuda)
+                    LinhaDetalhe(Icons.Default.LocalHospital, "Tipo de ajuda:", tipoAjuda)
                     Divider(modifier = Modifier.padding(vertical = 14.dp), color = Color.LightGray.copy(alpha = 0.4f))
-                    LinhaDetalhe(Icons.Default.Person, "Status:", status)
+                    LinhaDetalhe(Icons.Default.Info, "Status:", status)
                 }
             }
 
@@ -113,7 +99,7 @@ fun TelaDetalhesAgendamento(onBack: () -> Unit) {
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    LinhaDetalhe(Icons.Default.Place, "1. Sai da ONG:", enderecoOng)
+                    LinhaDetalhe(Icons.Default.Place, "1. Sai da ONG:", ENDERECO_ONG)
                     Divider(modifier = Modifier.padding(vertical = 14.dp), color = Color.LightGray.copy(alpha = 0.4f))
                     LinhaDetalhe(Icons.Default.Home, "2. Busca o idoso em casa:", casaIdoso)
                     Divider(modifier = Modifier.padding(vertical = 14.dp), color = Color.LightGray.copy(alpha = 0.4f))
@@ -121,7 +107,7 @@ fun TelaDetalhesAgendamento(onBack: () -> Unit) {
                     Divider(modifier = Modifier.padding(vertical = 14.dp), color = Color.LightGray.copy(alpha = 0.4f))
                     LinhaDetalhe(Icons.Default.Home, "4. Leva o idoso de volta para casa:", casaIdoso)
                     Divider(modifier = Modifier.padding(vertical = 14.dp), color = Color.LightGray.copy(alpha = 0.4f))
-                    LinhaDetalhe(Icons.Default.Place, "5. Retorna para a ONG:", enderecoOng)
+                    LinhaDetalhe(Icons.Default.Place, "5. Retorna para a ONG:", ENDERECO_ONG)
                 }
             }
         }

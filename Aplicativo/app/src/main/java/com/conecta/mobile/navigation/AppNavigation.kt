@@ -6,6 +6,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.conecta.mobile.TelaDetalhesAgendamento
+import com.conecta.mobile.TelaDisponibilidadeAjudante
 import com.conecta.mobile.TelaHistorico
 import com.conecta.mobile.TelaHome
 import com.conecta.mobile.TelaHomeAjudante
@@ -38,7 +39,16 @@ fun AppNavigation() {
                     navController.navigate("login") {
                         popUpTo("login") { inclusive = true }
                     }
+                },
+                onDisponibilidade = {
+                    navController.navigate("disponibilidade")
                 }
+            )
+        }
+
+        composable("disponibilidade") {
+            TelaDisponibilidadeAjudante(
+                onVoltar = { navController.popBackStack() }
             )
         }
 

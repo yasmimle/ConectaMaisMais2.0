@@ -10,7 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -30,10 +30,33 @@ import com.conecta.mobile.ui.theme.TextPrimary
 @Composable
 fun TelaPerfil(onBack: () -> Unit, onSair: () -> Unit) {
 
-    val nome = "Maria da Silva"
-    val cpf = "123.456.789-00"
-    val telefone = "(11) 91234-5678"
-    val endereco = "Rua das Flores, 123 - Osasco/SP"
+    // Dados de exemplo (só aparecem com usarApiFake = true). Com a API, vêm do banco.
+    var nome by remember { mutableStateOf(if (usarApiFake) "Maria da Silva" else "") }
+    var cpf by remember { mutableStateOf(if (usarApiFake) "123.456.789-00" else "") }
+    var telefone by remember { mutableStateOf(if (usarApiFake) "(11) 91234-5678" else "") }
+    var endereco by remember { mutableStateOf(if (usarApiFake) "Rua das Flores, 123 - Osasco/SP" else "") }
+    var erroCarga by remember { mutableStateOf("") }
+
+    // Busca o perfil na API assim que a tela abre.
+    LaunchedEffect(Unit) {
+        if (!usarApiFake) {
+            try {
+                val resposta = api.perfilUsuario(usuarioIdAtual, autorizacao())
+                val corpo = resposta.body()
+
+                if (resposta.isSuccessful && corpo != null) {
+                    nome = corpo.get("nome")?.asString ?: ""
+                    cpf = formatarCpf(corpo.get("cpf")?.asString ?: "")
+                    telefone = corpo.get("telefone")?.asString ?: ""
+                    endereco = corpo.get("endereco")?.asString ?: ""
+                } else {
+                    erroCarga = mensagemDoErro(resposta, "Não foi possível carregar seu perfil.")
+                }
+            } catch (e: Exception) {
+                erroCarga = "Sem conexão com o servidor. Tente de novo."
+            }
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -71,6 +94,11 @@ fun TelaPerfil(onBack: () -> Unit, onSair: () -> Unit) {
             }
 
             Spacer(modifier = Modifier.height(24.dp))
+
+            if (erroCarga.isNotEmpty()) {
+                Text(erroCarga, color = MaterialTheme.colorScheme.error, fontSize = 17.sp, fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(12.dp))
+            }
 
             Card(
                 modifier = Modifier.fillMaxWidth(),

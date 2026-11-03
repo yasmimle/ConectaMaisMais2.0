@@ -28,6 +28,7 @@ import com.conecta.mobile.ui.theme.StatusGreenBg
 import com.conecta.mobile.ui.theme.StatusRed
 import com.conecta.mobile.ui.theme.TextPrimary
 import java.util.Calendar
+import kotlinx.coroutines.launch
 
 // TelaDisponibilidadeAjudante (IBL 19 e 30): o ajudante escolhe a data e a
 // hora de início e de fim em que pode atender. Horário do app: 07:00 às 20:00.
@@ -56,8 +57,42 @@ fun TelaDisponibilidadeAjudante(onVoltar: () -> Unit) {
     var mensagem by remember { mutableStateOf("") }
     var mensagemErro by remember { mutableStateOf(false) }
 
-    // Cada item da lista é um texto "2026-10-26|08|12" (data, início, fim)
+    // Cada item da lista é um texto "2026-10-26|08|12|7" (data, início, fim, id na API)
     val disponibilidades = remember { mutableStateListOf<String>() }
+    val escopo = rememberCoroutineScope()
+    var recarregar by remember { mutableStateOf(0) }
+    var enviando by remember { mutableStateOf(false) }
+
+    // Busca na API os horários já cadastrados (e de novo sempre que "recarregar" muda).
+    LaunchedEffect(recarregar) {
+        if (!usarApiFake) {
+            try {
+                val resposta = api.listarDisponibilidade(usuarioIdAtual, autorizacao())
+                val corpo = resposta.body()
+
+                if (resposta.isSuccessful && corpo != null) {
+                    val novos = mutableListOf<String>()
+                    for (item in corpo) {
+                        val obj = item.asJsonObject
+                        val data = obj.get("data").asString
+                        val ini = obj.get("horaInicio").asString.substring(0, 2)
+                        val fim = obj.get("horaFim").asString.substring(0, 2)
+                        val id = obj.get("id").asInt
+                        novos.add("$data|$ini|$fim|$id")
+                    }
+                    novos.sort()
+                    disponibilidades.clear()
+                    disponibilidades.addAll(novos)
+                } else {
+                    mensagem = mensagemDoErro(resposta, "Não foi possível carregar seus horários.")
+                    mensagemErro = true
+                }
+            } catch (e: Exception) {
+                mensagem = "Sem conexão com o servidor. Tente de novo."
+                mensagemErro = true
+            }
+        }
+    }
 
     fun hora(h: Int) = h.toString().padStart(2, '0') + ":00"
     // "2026-10-26" -> "26/10"
@@ -155,22 +190,49 @@ fun TelaDisponibilidadeAjudante(onVoltar: () -> Unit) {
                         Spacer(modifier = Modifier.height(18.dp))
 
                         Button(
+                            enabled = !enviando,
                             onClick = {
                                 val data = dias[diaEscolhido]
-                                val chave = "$data|$horaInicio|$horaFim"
+                                val ini2 = horaInicio.toString().padStart(2, '0')
+                                val fim2 = horaFim.toString().padStart(2, '0')
+                                val chave = "$data|$ini2|$fim2|0"
                                 if (horaFim <= horaInicio) {
                                     mensagem = "A hora de fim precisa ser depois da hora de início."
                                     mensagemErro = true
                                 } else if (disponibilidades.any { it.startsWith("$data|") && sobrepoe(it, horaInicio, horaFim) }) {
                                     mensagem = "Esse horário se mistura com outro já adicionado."
                                     mensagemErro = true
-                                } else {
+                                } else if (usarApiFake) {
+                                    // Modo de teste: guarda só na tela.
                                     disponibilidades.add(chave)
                                     disponibilidades.sort()
                                     mensagem = "Horário adicionado."
                                     mensagemErro = false
-                                    // Quando a API existir: enviar a disponibilidade aqui
-                                    // (data yyyy-MM-dd, início e fim HH:mm).
+                                } else {
+                                    enviando = true
+                                    escopo.launch {
+                                        try {
+                                            val corpo = mapOf(
+                                                "data" to data,
+                                                "horaInicio" to "$ini2:00",
+                                                "horaFim" to "$fim2:00"
+                                            )
+                                            val resposta = api.adicionarDisponibilidade(usuarioIdAtual, corpo, autorizacao())
+
+                                            if (resposta.isSuccessful) {
+                                                mensagem = "Horário adicionado."
+                                                mensagemErro = false
+                                                recarregar = recarregar + 1
+                                            } else {
+                                                mensagem = mensagemDoErro(resposta, "Não foi possível adicionar o horário.")
+                                                mensagemErro = true
+                                            }
+                                        } catch (e: Exception) {
+                                            mensagem = "Sem conexão com o servidor. Tente de novo."
+                                            mensagemErro = true
+                                        }
+                                        enviando = false
+                                    }
                                 }
                             },
                             modifier = Modifier
@@ -234,7 +296,27 @@ fun TelaDisponibilidadeAjudante(onVoltar: () -> Unit) {
                             color = TextPrimary,
                             modifier = Modifier.weight(1f)
                         )
-                        IconButton(onClick = { disponibilidades.removeAt(i) }) {
+                        IconButton(onClick = {
+                            if (usarApiFake) {
+                                disponibilidades.removeAt(i)
+                            } else {
+                                val idApi = partes[3].toInt()
+                                escopo.launch {
+                                    try {
+                                        val resposta = api.removerDisponibilidade(idApi, autorizacao())
+                                        if (resposta.isSuccessful) {
+                                            recarregar = recarregar + 1
+                                        } else {
+                                            mensagem = mensagemDoErro(resposta, "Não foi possível remover o horário.")
+                                            mensagemErro = true
+                                        }
+                                    } catch (e: Exception) {
+                                        mensagem = "Sem conexão com o servidor. Tente de novo."
+                                        mensagemErro = true
+                                    }
+                                }
+                            }
+                        }) {
                             Icon(Icons.Default.Delete, contentDescription = "Remover horário", tint = StatusRed)
                         }
                     }

@@ -5,6 +5,8 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -21,17 +23,20 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
 import com.conecta.mobile.ui.theme.CardBackground
 import com.conecta.mobile.ui.theme.ConectaMobileTheme
 import com.conecta.mobile.ui.theme.DarkGreenPrimary
 import com.conecta.mobile.ui.theme.LightBackground
+import com.conecta.mobile.ui.theme.StatusGreenBg
 import com.conecta.mobile.ui.theme.TextPrimary
 import java.text.SimpleDateFormat
 import java.util.Locale
+import java.util.TimeZone
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -44,12 +49,62 @@ fun TelaNovoAgendamento(onBack: () -> Unit, onSalvar: () -> Unit) {
     var horaTexto by remember { mutableStateOf("") }
 
     var mostrarDatePicker by remember { mutableStateOf(false) }
-    var mostrarTimePicker by remember { mutableStateOf(false) }
 
     var erroOrigem by remember { mutableStateOf(false) }
     var erroDestino by remember { mutableStateOf(false) }
     var erroData by remember { mutableStateOf(false) }
     var erroHora by remember { mutableStateOf(false) }
+    var textoErroData by remember { mutableStateOf("Escolha uma data") }
+    var textoErroHora by remember { mutableStateOf("Escolha um horário") }
+
+    // Envio para a API
+    var carregando by remember { mutableStateOf(false) }
+    var mensagemApi by remember { mutableStateOf("") }
+    var agendado by remember { mutableStateOf(false) }
+    val escopo = rememberCoroutineScope()
+    val duracaoMin = duracaoPorTipo(tipoSelecionado)
+
+    // Horários livres que a API devolve para a data e o tipo de ajuda escolhidos
+    var horariosLivres by remember { mutableStateOf<List<String>>(emptyList()) }
+    var carregandoHorarios by remember { mutableStateOf(false) }
+    var avisoHorarios by remember { mutableStateOf("Escolha a data para ver os horários livres.") }
+
+    // Sempre que a data ou o tipo mudam, busca de novo os horários livres.
+    LaunchedEffect(dataTexto, tipoSelecionado) {
+        horaTexto = ""
+        horariosLivres = emptyList()
+        val dataConsulta = dataBrParaIso(dataTexto)
+
+        if (dataConsulta.isEmpty()) {
+            avisoHorarios = "Escolha a data para ver os horários livres."
+        } else if (dataConsulta < hojeIso()) {
+            avisoHorarios = "Escolha uma data de hoje em diante."
+        } else if (usarApiFake) {
+            horariosLivres = listOf("08:00", "09:00", "10:00", "14:00", "15:00")
+        } else {
+            carregandoHorarios = true
+            avisoHorarios = ""
+            try {
+                val resposta = api.horariosLivres(dataConsulta, tipoSelecionado, autorizacao())
+                val corpo = resposta.body()
+                if (resposta.isSuccessful && corpo != null) {
+                    val livres = mutableListOf<String>()
+                    for (item in corpo) {
+                        livres.add(item.asString)
+                    }
+                    horariosLivres = livres
+                    if (livres.isEmpty()) {
+                        avisoHorarios = "Nenhum horário livre nesse dia para esse tipo de ajuda. Escolha outra data."
+                    }
+                } else {
+                    avisoHorarios = mensagemDoErro(resposta, "Não foi possível ver os horários livres.")
+                }
+            } catch (e: Exception) {
+                avisoHorarios = "Sem conexão com o servidor. Tente de novo."
+            }
+            carregandoHorarios = false
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -66,7 +121,7 @@ fun TelaNovoAgendamento(onBack: () -> Unit, onSalvar: () -> Unit) {
             colors = TopAppBarDefaults.topAppBarColors(containerColor = DarkGreenPrimary)
         )
 
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.verticalScroll(rememberScrollState()).padding(16.dp)) {
             Text("TIPO DE AJUDA", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = TextPrimary)
 
             Spacer(modifier = Modifier.height(14.dp))
@@ -150,6 +205,21 @@ fun TelaNovoAgendamento(onBack: () -> Unit, onSalvar: () -> Unit) {
                         )
                     }
 
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Surface(
+                        color = LaranjaDestaque.copy(alpha = 0.18f),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Text(
+                            text = "⏱ Tempo previsto do atendimento: ${formatarDuracao(duracaoMin)}",
+                            modifier = Modifier.padding(12.dp),
+                            fontSize = 15.sp,
+                            color = TextPrimary,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+
                     Spacer(modifier = Modifier.height(18.dp))
 
                     Text("Data", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = TextPrimary)
@@ -178,64 +248,172 @@ fun TelaNovoAgendamento(onBack: () -> Unit, onSalvar: () -> Unit) {
                         )
                     )
                     if (erroData) {
-                        Text("Escolha uma data", color = MaterialTheme.colorScheme.error, fontSize = 15.sp)
+                        Text(textoErroData, color = MaterialTheme.colorScheme.error, fontSize = 15.sp)
                     }
 
                     Spacer(modifier = Modifier.height(18.dp))
 
-                    Text("Hora", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = TextPrimary)
+                    Text("Horários livres", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = TextPrimary)
                     Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedTextField(
-                        value = horaTexto,
-                        onValueChange = { },
-                        placeholder = { Text("Toque para escolher a hora", fontSize = 16.sp) },
-                        textStyle = TextStyle(fontSize = 18.sp),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(min = 60.dp)
-                            .clickable {
-                                mostrarTimePicker = true
-                                erroHora = false
-                            },
-                        leadingIcon = { Icon(Icons.Default.DateRange, contentDescription = null, tint = DarkGreenPrimary, modifier = Modifier.size(26.dp)) },
-                        shape = RoundedCornerShape(10.dp),
-                        enabled = false,
-                        isError = erroHora,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            disabledTextColor = TextPrimary,
-                            disabledBorderColor = if (erroHora) MaterialTheme.colorScheme.error else Color.Gray,
-                            disabledLeadingIconColor = DarkGreenPrimary,
-                            disabledPlaceholderColor = Color.Gray
-                        )
-                    )
+
+                    if (carregandoHorarios) {
+                        Text("Procurando horários livres...", fontSize = 16.sp, color = Color.Gray)
+                    } else if (horariosLivres.isEmpty()) {
+                        Text(avisoHorarios, fontSize = 16.sp, color = Color.Gray)
+                    } else {
+                        // Os horários aparecem em linhas de 4. Toque em um para escolher.
+                        horariosLivres.chunked(4).forEach { linha ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(bottom = 8.dp),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                linha.forEach { h ->
+                                    Surface(
+                                        color = if (horaTexto == h) DarkGreenPrimary else StatusGreenBg,
+                                        shape = RoundedCornerShape(10.dp),
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .clickable {
+                                                horaTexto = h
+                                                erroHora = false
+                                            }
+                                    ) {
+                                        Text(
+                                            text = h,
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(vertical = 12.dp),
+                                            textAlign = TextAlign.Center,
+                                            fontSize = 17.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = if (horaTexto == h) Color.White else DarkGreenPrimary
+                                        )
+                                    }
+                                }
+                                repeat(4 - linha.size) {
+                                    Spacer(modifier = Modifier.weight(1f))
+                                }
+                            }
+                        }
+                    }
                     if (erroHora) {
-                        Text("Escolha um horário", color = MaterialTheme.colorScheme.error, fontSize = 15.sp)
+                        Text(textoErroHora, color = MaterialTheme.colorScheme.error, fontSize = 15.sp)
                     }
                 }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
 
+            if (mensagemApi.isNotEmpty()) {
+                Text(
+                    text = mensagemApi,
+                    color = MaterialTheme.colorScheme.error,
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+
             Button(
                 onClick = {
+                    mensagemApi = ""
+                    val dataIso = dataBrParaIso(dataTexto)
+
                     erroOrigem = origem.isBlank()
                     erroDestino = destino.isBlank()
-                    erroData = dataTexto.isBlank()
-                    erroHora = horaTexto.isBlank()
+
+                    erroData = false
+                    if (dataTexto.isBlank()) {
+                        erroData = true
+                        textoErroData = "Escolha uma data"
+                    } else if (dataIso < hojeIso()) {
+                        erroData = true
+                        textoErroData = "Escolha uma data de hoje em diante"
+                    }
+
+                    erroHora = false
+                    if (horaTexto.isBlank()) {
+                        erroHora = true
+                        textoErroHora = "Escolha um horário"
+                    } else {
+                        // O atendimento inteiro precisa terminar até 20:00.
+                        val minutosInicio = horaTexto.substring(0, 2).toInt() * 60 + horaTexto.substring(3, 5).toInt()
+                        if (minutosInicio + duracaoMin > 20 * 60) {
+                            erroHora = true
+                            textoErroHora = "Esse atendimento dura ${formatarDuracao(duracaoMin)} e terminaria depois das 20:00"
+                        }
+                    }
 
                     if (!erroOrigem && !erroDestino && !erroData && !erroHora) {
-                        onSalvar()
+                        if (usarApiFake) {
+                            agendado = true
+                        } else {
+                            carregando = true
+                            escopo.launch {
+                                try {
+                                    val corpo = mapOf<String, Any>(
+                                        "idUsuario" to usuarioIdAtual,
+                                        "data" to dataIso,
+                                        "hora" to horaTexto,
+                                        "tipo" to tipoSelecionado,
+                                        "origem" to origem.trim(),
+                                        "destino" to destino.trim()
+                                    )
+                                    val resposta = api.criarAgendamento(corpo, autorizacao())
+
+                                    if (resposta.isSuccessful) {
+                                        agendado = true
+                                    } else {
+                                        mensagemApi = mensagemDoErro(resposta, "Não foi possível agendar. Tente de novo.")
+                                    }
+                                } catch (e: Exception) {
+                                    mensagemApi = "Sem conexão com o servidor. Tente de novo."
+                                }
+                                carregando = false
+                            }
+                        }
                     }
                 },
+                enabled = !carregando,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(60.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = DarkGreenPrimary),
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text("CONFIRMAR AGENDAMENTO", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 17.sp)
+                Text(
+                    text = if (carregando) "AGENDANDO..." else "CONFIRMAR AGENDAMENTO",
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 17.sp
+                )
             }
         }
+    }
+
+    // Aviso de que deu certo
+    if (agendado) {
+        AlertDialog(
+            onDismissRequest = { },
+            title = { Text("Agendamento confirmado!", fontSize = 22.sp, fontWeight = FontWeight.Bold) },
+            text = {
+                Text(
+                    "Seu atendimento de $tipoSelecionado ficou marcado para $dataTexto às $horaTexto. " +
+                        "Um ajudante vai buscar você em casa.",
+                    fontSize = 18.sp
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    agendado = false
+                    onSalvar()
+                }) {
+                    Text("OK", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+        )
     }
 
     if (mostrarDatePicker) {
@@ -248,6 +426,7 @@ fun TelaNovoAgendamento(onBack: () -> Unit, onSalvar: () -> Unit) {
                     val millis = estadoData.selectedDateMillis
                     if (millis != null) {
                         val formato = SimpleDateFormat("dd/MM/yyyy", Locale("pt", "BR"))
+                        formato.timeZone = TimeZone.getTimeZone("UTC")
                         dataTexto = formato.format(millis)
                     }
                     mostrarDatePicker = false
@@ -262,66 +441,6 @@ fun TelaNovoAgendamento(onBack: () -> Unit, onSalvar: () -> Unit) {
             }
         ) {
             DatePicker(state = estadoData)
-        }
-    }
-
-    if (mostrarTimePicker) {
-        val estadoHora = rememberTimePickerState(initialHour = 8, is24Hour = true)
-        var mensagemInvalida by remember { mutableStateOf(false) }
-
-        Dialog(onDismissRequest = { mostrarTimePicker = false }) {
-            Card(shape = RoundedCornerShape(16.dp)) {
-                Column(
-                    modifier = Modifier.padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = "Horário de atendimento: 07:00 às 20:00",
-                        fontSize = 15.sp,
-                        color = Color.Gray
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    TimePicker(state = estadoHora)
-
-                    if (mensagemInvalida) {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "Escolha um horário entre 07:00 e 20:00",
-                            color = MaterialTheme.colorScheme.error,
-                            fontSize = 15.sp
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Row {
-                        TextButton(onClick = { mostrarTimePicker = false }) {
-                            Text("Cancelar", fontSize = 16.sp)
-                        }
-                        Spacer(modifier = Modifier.width(8.dp))
-                        TextButton(onClick = {
-                            val hora = estadoHora.hour
-                            val minuto = estadoHora.minute
-
-                            val dentroDoHorario = hora in 7..20 && !(hora == 20 && minuto > 0)
-
-                            if (dentroDoHorario) {
-                                val h = hora.toString().padStart(2, '0')
-                                val m = minuto.toString().padStart(2, '0')
-                                horaTexto = "$h:$m"
-                                erroHora = false
-                                mostrarTimePicker = false
-                            } else {
-                                mensagemInvalida = true
-                            }
-                        }) {
-                            Text("OK", fontSize = 16.sp)
-                        }
-                    }
-                }
-            }
         }
     }
 }

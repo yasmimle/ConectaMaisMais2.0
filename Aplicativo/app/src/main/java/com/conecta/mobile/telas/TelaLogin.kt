@@ -25,7 +25,24 @@ import com.conecta.mobile.ui.theme.LaranjaDestaque
 import kotlinx.coroutines.launch
 
 // CPF de teste do ajudante (fake). Só vale com usarApiFake = true.
-val cpfAjudanteFake = "11111111111"
+val cpfAjudanteFake = "52998224725"
+
+// Confere os dígitos do CPF (a API faz a mesma conta).
+fun cpfValido(cpf: String): Boolean {
+    if (cpf.length != 11 || cpf.any { !it.isDigit() }) return false
+    if (cpf.all { it == cpf[0] }) return false
+
+    for (t in 9..10) {
+        var soma = 0
+        for (i in 0 until t) {
+            soma += (cpf[i] - '0') * (t + 1 - i)
+        }
+        var dv = (soma * 10) % 11
+        if (dv == 10) dv = 0
+        if (dv != cpf[t] - '0') return false
+    }
+    return true
+}
 
 // Formata o texto digitado no padrão 000.000.000-00, só com números.
 fun formatarCpf(input: String): String {
@@ -113,7 +130,7 @@ fun TelaLogin(onLogin: () -> Unit, onLoginAjudante: () -> Unit) {
                 if (erro) {
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = "Digite um CPF válido (11 números)",
+                        text = "Digite um CPF válido",
                         color = MaterialTheme.colorScheme.error,
                         fontSize = 16.sp
                     )
@@ -134,7 +151,7 @@ fun TelaLogin(onLogin: () -> Unit, onLoginAjudante: () -> Unit) {
                     onClick = {
                         val numeros = cpf.filter { it.isDigit() }
 
-                        if (numeros.length != 11) {
+                        if (!cpfValido(numeros)) {
                             erro = true
                         } else if (usarApiFake) {
                             // Modo de teste: sem API
@@ -150,12 +167,13 @@ fun TelaLogin(onLogin: () -> Unit, onLoginAjudante: () -> Unit) {
 
                                     if (resposta.isSuccessful && corpo != null) {
                                         tokenAtual = corpo.get("token")?.asString
-                                        tokenAtual = corpo.get("token")?.asString
                                         usuarioIdAtual = corpo.get("id")?.asInt ?: 0
                                         val tipo = corpo.get("tipo")?.asString
                                         if (tipo == "ajudante") onLoginAjudante() else onLogin()
-                                    } else {
+                                    } else if (resposta.code() == 401) {
                                         mensagemErro = "CPF não encontrado. Procure a ONG."
+                                    } else {
+                                        mensagemErro = mensagemDoErro(resposta, "Não foi possível entrar. Tente de novo.")
                                     }
                                 } catch (e: Exception) {
                                     mensagemErro = "Sem conexão com o servidor. Tente de novo."
