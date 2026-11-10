@@ -200,20 +200,38 @@ As imagens abaixo apresentam as principais telas do aplicativo Conecta++, desenv
 
 ## Como executar o projeto
 
-As instruções de execução serão complementadas conforme a finalização da API e a integração entre os componentes da solução.
+Para executar o Conecta++, é necessário configurar o banco de dados e iniciar os componentes da solução conforme as instruções abaixo.
+
+### Banco de Dados
+
+1. Abra o SQL Server Management Studio (SSMS).
+2. Conecte-se à instância do SQL Server.
+3. Abra o arquivo `Banco_SQL/banco.sql`.
+4. Execute o script para criar o banco de dados e suas tabelas.
+
+**Atenção:** o script recria o banco `dbSistemaDoacao`, apagando os dados existentes. Utilize-o somente em uma instalação inicial ou quando desejar recriar o banco.
+
+### Back-end (API)
+
+1. Abra a solução `Back-end/ConectaApi.sln` no Visual Studio.
+2. Verifique a string de conexão com o SQL Server no arquivo `Banco.cs` e ajuste-a conforme a instância utilizada.
+3. Restaure as dependências do projeto.
+4. Execute a API pelo Visual Studio.
+5. Acesse o Swagger pelo endereço `http://localhost:5000/swagger` para visualizar e testar as rotas disponíveis.
 
 ### Site Web
 
-1. Abra o projeto no Visual Studio.
-2. Configure a conexão com o SQL Server, conforme as configurações do projeto.
-3. Verifique as dependências e os arquivos de configuração.
-4. Execute a aplicação pelo ambiente de desenvolvimento.
+1. Abra a pasta `Front-end` no Visual Studio Code ou em outro editor.
+2. Abra o arquivo `html/index.html` em um navegador.
+3. Para utilizar os recursos do sistema, mantenha a API e o banco de dados configurados e em execução quando necessário.
 
-### Aplicativo
+### Aplicativo Mobile
 
-As instruções de execução serão adicionadas após a conclusão das etapas de desenvolvimento e configuração do aplicativo.
-
----
+1. Abra a pasta `Aplicativo` no Android Studio.
+2. Aguarde a sincronização das dependências do Gradle.
+3. Verifique o endereço da API configurado no arquivo `ApiService.kt`.
+4. Execute o projeto em um emulador Android ou dispositivo compatível.
+5. Certifique-se de que a API esteja em execução para utilizar os recursos que dependem da comunicação com o back-end.
 
 ## Equipe
 
