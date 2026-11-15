@@ -1,0 +1,6 @@
+@ConectaApi_HostAddress = http://localhost:5164
+
+GET {{ConectaApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
