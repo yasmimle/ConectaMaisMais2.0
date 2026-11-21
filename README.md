@@ -190,14 +190,13 @@ As imagens abaixo apresentam as principais telas do aplicativo Conecta++, desenv
     <td><img src="Imagens/perfil_atendente.jpeg" width="300"></td>
   </tr>
   <tr>
+    <td align="center"><strong>Histórico</strong></td>
+    <td align="center"><strong>Disponibilidade</strong></td>
+  </tr>
   <tr>
-  <td align="center" colspan="2"><strong>Histórico</strong></td>
-  <td align="center" colspan="2"><strong>Disponibilidade</strong></td>
-</tr>
-<tr>
-  <td align="center" colspan="2"><img src="Imagens/historico.jpeg" width="300"></td>
-  <td align="center" colspan="2"><img src="Imagens/disponibilidade.jpeg" width="300"></td>
-</tr>
+    <td><img src="Imagens/historico.jpeg" width="300"></td>
+    <td><img src="Imagens/disponibilidade.jpeg" width="300"></td>
+  </tr
 
 
 ## Como executar o projeto
