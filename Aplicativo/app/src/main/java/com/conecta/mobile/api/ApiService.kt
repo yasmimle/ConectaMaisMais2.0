@@ -3,7 +3,10 @@ package com.conecta.mobile
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
+import okhttp3.HttpUrl
+import okhttp3.Interceptor
 import okhttp3.OkHttpClient
+import okhttp3.Request
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -21,10 +24,11 @@ import java.util.concurrent.TimeUnit
 // true = o app usa dados de exemplo (sem API). false = usa a API de verdade.
 val usarApiFake = false
 
-// Endereço da API. No emulador do Android Studio, 10.0.2.2 é o computador.
-// A porta 5000 é a do launchSettings.json da API.
-// Em celular de verdade, troque pelo IP do computador (ex.: http://192.168.0.10:5000/).
-const val URL_BASE_API = "http://10.0.2.2:5000/"
+// Endereço da API. Vem do build: no debug aponta para 127.0.0.1 (túnel do adb,
+// com `adb reverse tcp:5000 tcp:5000`) e no release para o 10.0.2.2/host.
+// Em celular de verdade fora do túnel, troque no build.gradle.kts pelo IP do
+// computador (ex.: http://192.168.0.10:5000/).
+val URL_BASE_API: String = BuildConfig.API_BASE_URL
 
 // Dados do login (ficam na memória enquanto o app estiver aberto).
 var tokenAtual: String? = null
@@ -36,6 +40,27 @@ var agendamentoAtual: JsonObject = JsonObject()
 
 // Endereço da ONG (o mesmo que está no banco de dados).
 const val ENDERECO_ONG = "Rua Gugu, São Paulo SP"
+
+// Sair da conta: limpa o que ficou guardado do login em memória.
+fun encerrarSessao() {
+    tokenAtual = null
+    usuarioIdAtual = 0
+    agendamentoAtual = JsonObject()
+}
+
+// Corpo do POST /agendamentos. Precisa ser uma classe concreta: com
+// Map<String, Any> o Retrofit recusa a assinatura em tempo de execução
+// ("Parameter type must not include a type variable or wildcard: java.util.Map"),
+// porque o Kotlin gera Map<String, ?> na assinatura do método. Era por isso que
+// nenhum agendamento saía do app, mesmo com o servidor no ar.
+data class NovoAgendamento(
+    val idUsuario: Int,
+    val data: String,
+    val hora: String,
+    val tipo: String,
+    val origem: String,
+    val destino: String
+)
 
 interface ApiService {
 
@@ -55,7 +80,7 @@ interface ApiService {
 
     @POST("agendamentos")
     suspend fun criarAgendamento(
-        @Body corpo: Map<String, Any>,
+        @Body corpo: NovoAgendamento,
         @Header("Authorization") autorizacao: String
     ): Response<JsonObject>
 
@@ -114,10 +139,91 @@ interface ApiService {
     ): Response<Unit>
 }
 
+// Endereços possíveis do servidor, na ordem em que o app tenta:
+//  - o que veio do build (BuildConfig.API_BASE_URL);
+//  - 10.0.2.2, que é o computador visto de dentro do emulador do Android — funciona
+//    em qualquer máquina, sem precisar de comando nenhum;
+//  - 127.0.0.1, que só responde com o túnel do adb (adb reverse tcp:5000 tcp:5000),
+//    usado quando o app roda em celular ligado por USB.
+fun candidatosDeServidor(): List<String> {
+    val lista = mutableListOf<String>()
+    for (endereco in listOf(BuildConfig.API_BASE_URL, "http://10.0.2.2:5000/", "http://127.0.0.1:5000/")) {
+        val normalizado = if (endereco.endsWith("/")) endereco else "$endereco/"
+        if (!lista.contains(normalizado)) lista.add(normalizado)
+    }
+    return lista
+}
+
+// Endereço que respondeu por último. Fica guardado para não repetir a descoberta
+// a cada chamada; se a rede cair, ele é zerado e a próxima chamada descobre de novo.
+@Volatile
+private var baseConfirmada: String? = null
+
+// Troca só esquema/host/porta da requisição, mantendo caminho, query e corpo.
+private fun Request.comBase(base: String): Request {
+    val outra = HttpUrl.parse(base) ?: return this
+    val novo = url().newBuilder()
+        .scheme(outra.scheme())
+        .host(outra.host())
+        .port(outra.port())
+        .build()
+    return newBuilder().url(novo).build()
+}
+
+// Descobre qual endereço do servidor responde e manda a chamada para ele.
+// Sem isso o app dependia de alguém rodar `adb reverse` na mão para funcionar.
+private class DescobrirServidorInterceptor : Interceptor {
+    override fun intercept(chain: Interceptor.Chain): okhttp3.Response {
+        val original = chain.request()
+        val confirmado = baseConfirmada
+
+        if (confirmado != null) {
+            try {
+                return chain.proceed(original.comBase(confirmado))
+            } catch (e: java.io.IOException) {
+                // O endereço que funcionava parou de responder: esquece e redescobre
+                // na próxima chamada (não insiste aqui para não duplicar o envio,
+                // que pode ser um agendamento).
+                baseConfirmada = null
+                throw e
+            }
+        }
+
+        // Sonda curta: uma chamada de leitura em cada endereço até achar quem responde.
+        val sonda = OkHttpClient.Builder()
+            .connectTimeout(3, TimeUnit.SECONDS)
+            .readTimeout(3, TimeUnit.SECONDS)
+            .build()
+
+        for (base in candidatosDeServidor()) {
+            val raiz = HttpUrl.parse(base) ?: continue
+            val pedido = Request.Builder()
+                .url(raiz.newBuilder().addPathSegments("ong/contato").build())
+                .build()
+            try {
+                sonda.newCall(pedido).execute().use { resposta ->
+                    if (resposta.isSuccessful) {
+                        baseConfirmada = base
+                        android.util.Log.i("ConectaServidor", "servidor encontrado em $base")
+                        return chain.proceed(original.comBase(base))
+                    }
+                }
+            } catch (e: Exception) {
+                android.util.Log.i("ConectaServidor", "sem resposta em $base: " + e.toString())
+            }
+        }
+
+        // Nenhum respondeu: deixa a chamada original falhar com o erro de verdade.
+        android.util.Log.e("ConectaServidor", "nenhum endereco respondeu: " + candidatosDeServidor())
+        return chain.proceed(original)
+    }
+}
+
 // A API pode demorar um pouco ao calcular a distância pelos endereços.
 private val clienteHttp = OkHttpClient.Builder()
     .connectTimeout(15, TimeUnit.SECONDS)
     .readTimeout(40, TimeUnit.SECONDS)
+    .addInterceptor(DescobrirServidorInterceptor())
     .build()
 
 val api: ApiService = Retrofit.Builder()

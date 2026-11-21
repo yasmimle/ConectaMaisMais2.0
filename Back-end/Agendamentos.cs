@@ -109,6 +109,30 @@ public static class AgendamentosApi
         }
     }
 
+    // Tira a cidade/estado de um endereco: "Rua das Flores, 123 - Osasco/SP" -> "Osasco, SP".
+    // Serve para completar destinos curtos na hora de geocodificar.
+    static string CidadeDoEndereco(string endereco)
+    {
+        if (string.IsNullOrWhiteSpace(endereco)) return "";
+
+        var partes = endereco.Split(',');
+        var ultimo = partes[partes.Length - 1].Trim();   // "123 - Osasco/SP"
+
+        if (ultimo.Contains('-'))
+            ultimo = ultimo.Substring(ultimo.LastIndexOf('-') + 1).Trim(); // "Osasco/SP"
+
+        if (ultimo.Contains('/'))
+        {
+            var cidadeEstado = ultimo.Split('/');
+            var cidade = cidadeEstado[0].Trim();
+            var estado = cidadeEstado[1].Trim();
+            if (cidade.Length > 1 && !cidade.All(char.IsDigit))
+                return cidade + ", " + estado;
+        }
+
+        return "";
+    }
+
     static string Texto(object valor)
     {
         return valor == DBNull.Value ? "" : valor.ToString();
@@ -323,6 +347,29 @@ public static class AgendamentosApi
                     distancia = Math.Round((decimal)DistanciaEntrePontos(
                         pontoOrigem.Value.Lat, pontoOrigem.Value.Lon,
                         pontoDestino.Value.Lat, pontoDestino.Value.Lon), 2);
+
+                    // Destino curto ("Mercado Extra") cai em outra cidade e a distancia
+                    // estoura o limite. Antes de recusar, tenta de novo com a cidade da
+                    // origem no texto: "Mercado Extra" -> "Mercado Extra, Osasco, SP".
+                    if (distancia.Value > LIMITE_KM)
+                    {
+                        var cidade = CidadeDoEndereco(dados.Origem);
+                        if (!string.IsNullOrEmpty(cidade))
+                        {
+                            await Task.Delay(1100);
+                            var destinoComCidade = await Geocodificar(dados.Destino + ", " + cidade);
+
+                            if (destinoComCidade.HasValue)
+                            {
+                                var distanciaComCidade = Math.Round((decimal)DistanciaEntrePontos(
+                                    pontoOrigem.Value.Lat, pontoOrigem.Value.Lon,
+                                    destinoComCidade.Value.Lat, destinoComCidade.Value.Lon), 2);
+
+                                if (distanciaComCidade <= LIMITE_KM)
+                                    distancia = distanciaComCidade;
+                            }
+                        }
+                    }
                 }
             }
 

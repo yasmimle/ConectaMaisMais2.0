@@ -17,9 +17,19 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // URL padrão (build de release / celular na mesma rede).
+        buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:5000/\"")
     }
 
     buildTypes {
+        debug {
+            // No debug o app procura o computador sozinho: tenta este endereço,
+            // depois 10.0.2.2 (o host visto de dentro do emulador, que funciona em
+            // qualquer máquina sem comando manual) e por último 127.0.0.1 (túnel do
+            // adb, usado no celular ligado por USB). Ver DescobrirServidorInterceptor.
+            buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:5000/\"")
+        }
         release {
             optimization {
                 enable = false
@@ -32,6 +42,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 

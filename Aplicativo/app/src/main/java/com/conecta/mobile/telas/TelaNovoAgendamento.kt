@@ -7,6 +7,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -121,7 +122,12 @@ fun TelaNovoAgendamento(onBack: () -> Unit, onSalvar: () -> Unit) {
             colors = TopAppBarDefaults.topAppBarColors(containerColor = DarkGreenPrimary)
         )
 
-        Column(modifier = Modifier.verticalScroll(rememberScrollState()).padding(16.dp)) {
+        Column(
+            modifier = Modifier
+                .verticalScroll(rememberScrollState())
+                .navigationBarsPadding()
+                .padding(16.dp)
+        ) {
             Text("TIPO DE AJUDA", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = TextPrimary)
 
             Spacer(modifier = Modifier.height(14.dp))
@@ -353,22 +359,25 @@ fun TelaNovoAgendamento(onBack: () -> Unit, onSalvar: () -> Unit) {
                             carregando = true
                             escopo.launch {
                                 try {
-                                    val corpo = mapOf<String, Any>(
-                                        "idUsuario" to usuarioIdAtual,
-                                        "data" to dataIso,
-                                        "hora" to horaTexto,
-                                        "tipo" to tipoSelecionado,
-                                        "origem" to origem.trim(),
-                                        "destino" to destino.trim()
+                                    val corpo = NovoAgendamento(
+                                        idUsuario = usuarioIdAtual,
+                                        data = dataIso,
+                                        hora = horaTexto,
+                                        tipo = tipoSelecionado,
+                                        origem = origem.trim(),
+                                        destino = destino.trim()
                                     )
                                     val resposta = api.criarAgendamento(corpo, autorizacao())
 
                                     if (resposta.isSuccessful) {
                                         agendado = true
                                     } else {
+                                        android.util.Log.e("ConectaAgendar", "resposta HTTP " + resposta.code() + ": " + resposta.errorBody()?.string())
                                         mensagemApi = mensagemDoErro(resposta, "Não foi possível agendar. Tente de novo.")
                                     }
                                 } catch (e: Exception) {
+                                    // Diagnóstico: sem isso qualquer falha vira "sem conexão" e esconde a causa.
+                                    android.util.Log.e("ConectaAgendar", "falha ao criar agendamento: " + e.toString(), e)
                                     mensagemApi = "Sem conexão com o servidor. Tente de novo."
                                 }
                                 carregando = false
