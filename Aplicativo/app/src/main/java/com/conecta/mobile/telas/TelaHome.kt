@@ -14,6 +14,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Call
+import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -45,7 +46,8 @@ var whatsappOng = "11919100860"
 fun TelaHome(
     onNovoAgendamento: () -> Unit,
     onVerHistorico: () -> Unit,
-    onVerPerfil: () -> Unit
+    onVerPerfil: () -> Unit,
+    onSair: () -> Unit
 ) {
     val context = LocalContext.current
     var mostrarContato by remember { mutableStateOf(false) }
@@ -93,6 +95,18 @@ fun TelaHome(
             Column {
                 Text("Bem-vindo(a),", color = Color.White.copy(alpha = 0.85f), fontSize = 16.sp)
                 Text("Olá!", color = Color.White, fontSize = 26.sp, fontWeight = FontWeight.Bold)
+            }
+
+            // Sair da conta direto da tela inicial, sem precisar entrar no perfil.
+            Spacer(modifier = Modifier.weight(1f))
+            TextButton(onClick = onSair) {
+                Icon(
+                    Icons.Default.ExitToApp,
+                    contentDescription = "Sair da conta",
+                    tint = Color.White
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text("Sair", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp)
             }
         }
 
@@ -237,7 +251,8 @@ fun TelaHomePreview() {
         TelaHome(
             onNovoAgendamento = {},
             onVerHistorico = {},
-            onVerPerfil = {}
+            onVerPerfil = {},
+            onSair = {}
         )
     }
 }

@@ -6,6 +6,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.conecta.mobile.TelaDetalhesAgendamento
+import com.conecta.mobile.encerrarSessao
 import com.conecta.mobile.TelaDisponibilidadeAjudante
 import com.conecta.mobile.TelaHistorico
 import com.conecta.mobile.TelaHome
@@ -36,6 +37,7 @@ fun AppNavigation() {
         composable("homeAjudante") {
             TelaHomeAjudante(
                 onSair = {
+                    encerrarSessao()
                     navController.navigate("login") {
                         popUpTo("login") { inclusive = true }
                     }
@@ -62,6 +64,12 @@ fun AppNavigation() {
                 },
                 onVerPerfil = {
                     navController.navigate("perfil")
+                },
+                onSair = {
+                    encerrarSessao()
+                    navController.navigate("login") {
+                        popUpTo("login") { inclusive = true }
+                    }
                 }
             )
         }
@@ -88,6 +96,7 @@ fun AppNavigation() {
             TelaPerfil(
                 onBack = { navController.popBackStack() },
                 onSair = {
+                    encerrarSessao()
                     navController.navigate("login") {
                         popUpTo("login") { inclusive = true }
                     }

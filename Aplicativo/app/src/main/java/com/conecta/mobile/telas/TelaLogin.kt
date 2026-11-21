@@ -12,9 +12,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.OffsetMapping
+import androidx.compose.ui.text.input.TransformedText
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -56,6 +60,37 @@ fun formatarCpf(input: String): String {
     }
 
     return builder.toString()
+}
+
+// Máscara do CPF aplicada só na exibição: o estado guarda os dígitos crus, então
+// reescrever o texto a cada tecla não reposiciona o cursor (era o que embaralhava
+// os dígitos quando se digitava rápido).
+class CpfVisualTransformation : VisualTransformation {
+    override fun filter(text: AnnotatedString): TransformedText {
+        val digitos = text.text
+        val saida = StringBuilder()
+        for (i in digitos.indices) {
+            saida.append(digitos[i])
+            if (i == 2 || i == 5) saida.append('.')
+            if (i == 8) saida.append('-')
+        }
+
+        val deslocamento: (Int) -> Int = { o ->
+            (if (o >= 3) 1 else 0) + (if (o >= 6) 1 else 0) + (if (o >= 9) 1 else 0)
+        }
+
+        val map = object : OffsetMapping {
+            override fun originalToTransformed(offset: Int): Int = offset + deslocamento(offset)
+            override fun transformedToOriginal(offset: Int): Int {
+                var o = offset
+                if (offset > 3) o--
+                if (offset > 7) o--
+                if (offset > 11) o--
+                return o.coerceIn(0, digitos.length)
+            }
+        }
+        return TransformedText(AnnotatedString(saida.toString()), map)
+    }
 }
 
 // TelaLogin: todo mundo entra só com CPF. O app decide para qual tela mandar.
@@ -104,10 +139,11 @@ fun TelaLogin(onLogin: () -> Unit, onLoginAjudante: () -> Unit) {
                 OutlinedTextField(
                     value = cpf,
                     onValueChange = {
-                        cpf = formatarCpf(it)
+                        cpf = it.filter { c -> c.isDigit() }.take(11)
                         erro = false
                         mensagemErro = ""
                     },
+                    visualTransformation = CpfVisualTransformation(),
                     leadingIcon = {
                         Icon(
                             Icons.Default.Person,
@@ -176,6 +212,8 @@ fun TelaLogin(onLogin: () -> Unit, onLoginAjudante: () -> Unit) {
                                         mensagemErro = mensagemDoErro(resposta, "Não foi possível entrar. Tente de novo.")
                                     }
                                 } catch (e: Exception) {
+                                    // Diagnóstico: registra a causa real no logcat (tag ConectaLogin).
+                                    android.util.Log.e("ConectaLogin", "falha no login por CPF: " + e.toString(), e)
                                     mensagemErro = "Sem conexão com o servidor. Tente de novo."
                                 }
                                 carregando = false
